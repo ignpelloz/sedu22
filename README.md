@@ -3,7 +3,7 @@
 - Aniadir leds: uno de un color cuando se reciba:
 	- Rojo: si se recibe una trama erronea
 	- Verde: si se recibe una trama [S]
-	- Azul: si se recive una trama [A...]
+	- Azul: si se recibe una trama [A...]
 
 
 - Finalizar modulos 4 y 5:

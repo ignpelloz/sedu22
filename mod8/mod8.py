@@ -2,6 +2,8 @@ import requests
 import time
 import MySQLdb
 import sys
+import os
+import json
 
 # ThingSpeak API key
 API_KEY = "151QABP1286D3OQT"
@@ -35,20 +37,25 @@ def eliminarDatos():
 
 while(1):
 
-    # TODO: monitorear la base de datos, y en cuanto se produzca una nueva escritura, hacer un query y lo que se obtenga se envia a ThingSpeak
+    # Si se produce una nueva escritura en la BD, hacer un query y lo que se obtenga se envia a ThingSpeak
     if os.path.isfile("/tmp/nuevoRegistroEnDB") is True:
-        nuevaEntrada = run_query("SELECT * FROM sensores ORDER BY id DESC LIMIT 1;") # TODO: esto devuelve el id, los 6 sensores y la hora
+        nuevaEntrada = run_query("SELECT * FROM sensores ORDER BY id DESC LIMIT 1;") # Esto devuelve el id, los 6 sensores y la hora (ultimo registro)
 
-        # TODO: usar la hora devuelta por la consulta a la BD para el grafico (necesito cambiar de GET a POST para eso)
-        writeURL = "https://api.thingspeak.com/update?api_key=%s&field1=%s&field2=%s&field3=%s&field4=%s&field5=%s&field6=%s" \
-            % (API_KEY, nuevaEntrada[1], nuevaEntrada[2], nuevaEntrada[3], nuevaEntrada[4], nuevaEntrada[5], nuevaEntrada[6])
+        resp = requests.post("https://api.thingspeak.com/update.json",
+              data=json.dumps({"api_key": API_KEY,
+                      "field1": float(nuevaEntrada[1]),
+                      "field2": float(nuevaEntrada[2]),
+                      "field3": float(nuevaEntrada[3]),
+                      "field4": float(nuevaEntrada[4]),
+                      "field5": float(nuevaEntrada[5]),
+                      "field6": float(nuevaEntrada[6]),
+                      "created_at": nuevaEntrada[7]}, default=str), # TODO: la fecha debe ser unica, no puede existir ya. Ademas, no debe haber 0s a la izq (por ejemplo, nu usar 02, 03, etc). Tambien, comprobar porque no respeta la fecha utilizada. UPDATE: parece que no tengo que hacer nada especial con la fecha, comprobar!
+              headers = {'Content-Type': 'application/json'})
 
         # TODO: checkear respuesta y en caso de error repetir?
-        resp = requests.get(writeURL)
-
         print(resp.text)
 
-        # Delete
+        # Se elimina el flag
         os.remove("/tmp/nuevoRegistroEnDB")
 
     time.sleep(latenciaEntreLecturas)
