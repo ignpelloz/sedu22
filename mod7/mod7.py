@@ -62,26 +62,9 @@ while(1):
         print(separadas[:-1])
 
         # Se inserta lo obtenido en la BD
-        hora_actual = time.now()
-
-        # Se debe crear la tabla con el siguiente comando
-        """
-        CREATE TABLE sensores(
-            ID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            luminosidad DECIMAL(10,5),
-            humedad DECIMAL(10,5),
-            temperatura DECIMAL(10,5),
-            imux DECIMAL(10,5),
-            imuy DECIMAL(10,5),
-            sonido DECIMAL(10,5),
-            fecha_y_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-        """
-
-        query = "INSERT INTO sensores (luminosidad,humedad,temperatura,imux,imuy,sonido,fecha_y_hora) \
-                 VALUES ('%s','%s','%s','%s','%s','%s','%s')" % (separadas[0],separadas[1],separadas[2],separadas[3],separadas[4],separadas[5])
-
-        run_query(query)
+        run_query("INSERT INTO sensores (luminosidad,humedad,temperatura,imux,imuy,sonido) \
+                  VALUES ('%s','%s','%s','%s','%s','%s');" % (separadas[0],separadas[1],separadas[2],separadas[3],separadas[4],separadas[5]))
+        open("/tmp/nuevoRegistroEnDB", "w")
 
         # Se coloca el servo en su posicion 180 si se llega al umbral del LDR (si es inferior se coloca en su posicion 0, en el caso de que este en 180)
         if separadas[0] >= umbralLDR and servoActivado is False:
