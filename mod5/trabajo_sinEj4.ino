@@ -3,15 +3,21 @@
 #include <Servo.h>
 
 //Constants
-#define DHTPIN 2     // DHT en el pin 2
 #define DHTTYPE DHT11   // Tengo DHT 11 en lugar de 22
 #define NUMSENSORES 6
-DHT dht(DHTPIN, DHTTYPE);
+
+//Pines
+int dhtPin = 2
+int ldrPin = 0;
+int servoPin = 3;
+int motorPin = 5; // DC Motor (debe ser un pin con PWM)
+int sonidoPin = 1;
+int ledRojoPin = 10;
+int ledVerdePin = 11;
+int ledAzulPin = 12;
 
 float hum, temp;
-int ldrPin = 0;
 int ldrValue;
-int sonidoPin = 1;
 int cmd;
 
 //Dirección I2C de la IMU
@@ -34,11 +40,10 @@ float Gy[2];
 float Angle[2];
 
 // Servo
-int servoPin = 3;
 Servo servoMotor;
 
-// DC Motor (debe ser un pin con PWM)
-int pinMotor = 5;
+// DHT
+DHT dht(dhtPin, DHTTYPE);
 
 // Maquina de estado
 int estado = 1;
@@ -108,8 +113,6 @@ int generarChecksum(float sensores[]){
 String consultarSensores(){
   /* Devuelve un string del tipo [34/2,3/6,1/3] */
 
-  // TODO: add Sound sensor with leds to display the level
-
   float sensores[NUMSENSORES];
 
   // Intensidad de la luz (LDR)
@@ -138,6 +141,7 @@ String consultarSensores(){
 }
 
 void estadoError(){
+  ledBlink(ledRojoPin);
   estado = 1;
   Serial.println("[E]");
 }
@@ -156,14 +160,25 @@ void realizarMovimiento(){
   if (actuadorAAccionar == 0){
     servoMotor.write(movimientoSolicitado*20); // va de 0 a 180
   } else if (actuadorAAccionar == 1){
-    analogWrite(pinMotor, movimientoSolicitado*28); // va de 0 a 255
+    analogWrite(motorPin, movimientoSolicitado*28); // va de 0 a 255
   }
 }
 
-void setup() { // TODO: remove what's not needed from here
+void ledBlink(int ledPin){
+  digitalWrite(ledPin, HIGH);
+  delay(400);
+  digitalWrite(ledPin, LOW);
+}
+
+void setup() { 
 
   // Puerto serie
   Serial.begin(9600);
+
+  // Leds
+  pinMode(ledRojoPin, OUTPUT);
+  pinMode(ledVerdePin, OUTPUT);
+  pinMode(ledAzulPin, OUTPUT);
 
   //Sensores
   pinMode(ldrPin, INPUT);
@@ -176,7 +191,7 @@ void setup() { // TODO: remove what's not needed from here
 
   //Actuadores
   servoMotor.attach(servoPin);
-  pinMode(pinMotor, OUTPUT);
+  pinMode(motorPin, OUTPUT);
 }
 
 void loop_ej2 () {
@@ -228,6 +243,7 @@ void loop () {
         break;
       }case 3: {
         if (charRecibido == ']'){
+          ledBlink(ledVerdePin);
           Serial.println(consultarSensores());
           estado = 1;
         }else if(charRecibido == ','){
@@ -261,6 +277,7 @@ void loop () {
         break;
       }case 7: {
         if (charRecibido == ']'){
+          ledBlink(ledAzulPin);
           realizarMovimiento();
         }else{
           estadoError();
