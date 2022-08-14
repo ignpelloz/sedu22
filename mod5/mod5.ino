@@ -1,3 +1,5 @@
+/* AQUI FALTA EL EJ 4 (COMBINAR CON LO HECHO EN EL MOD4)*/
+
 #include <DHT.h>
 #include <Wire.h>
 #include <Servo.h>
@@ -170,7 +172,7 @@ void ledBlink(int ledPin){
   digitalWrite(ledPin, LOW);
 }
 
-void setup() { 
+void setup() {
 
   // Puerto serie
   Serial.begin(9600);
