@@ -74,10 +74,10 @@ void setup() {
   cola = xQueueCreate(1, sizeof(struct lecturaSensoresStruct)); // Cada elemento en la cola será un string de 50 caracteres
 
   // Creacion de tareas que se ejecutaran de manera independiente
-  xTaskCreate(recibirPorPuertoSerie, (const portCHAR *) "recibirPorPuertoSerie", 256, NULL, 3, NULL); // TODO: si las prioridades de las tareas de lectura y activacion son menores que esta, esta funciona, si no no
+  xTaskCreate(recibirPorPuertoSerie, (const portCHAR *) "recibirPorPuertoSerie", 512, NULL, 3, NULL); // TODO: si las prioridades de las tareas de lectura y activacion son menores que esta, esta funciona, si no no
   xTaskCreate(leerSensores, (const portCHAR *) "leerSensores", 512, NULL, 2, NULL);
   xTaskCreate(activarActuador, (const portCHAR *) "activarActuador", 256, NULL, 2, NULL);
-  xTaskCreate(enviarPorPuertoSerie, (const portCHAR *) "enviarPorPuertoSerie", 256, NULL, 1, NULL);
+  xTaskCreate(enviarPorPuertoSerie, (const portCHAR *) "enviarPorPuertoSerie", 512, NULL, 1, NULL);
 
 }
 
