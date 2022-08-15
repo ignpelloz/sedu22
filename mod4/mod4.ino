@@ -30,7 +30,6 @@ SemaphoreHandle_t semaforoLecturaSensores;  // Mutex semaforo para permitir la l
 SemaphoreHandle_t semaforoActivacionActuador;  // Mutex semaforo para permitir la activacion del actuador
 
 // Cola
-int tamPalabraEnCola = 50;
 QueueHandle_t cola;
 
 // Caracteres especiales de las respuestas (lecturas) TODO: deben ser independientes de las tramas de peticion [S] y [A,..]
@@ -72,15 +71,14 @@ void setup() {
   //xSemaphoreTake(semaforoActivacionActuador, portMAX_DELAY);
 
   // Cola
-  cola = xQueueCreate(1, tamPalabraEnCola); // Cada elemento en la cola será un string de 50 caracteres
+  cola = xQueueCreate(1, sizeof(struct lecturaSensoresStruct)); // Cada elemento en la cola será un string de 50 caracteres
 
   // Creacion de tareas que se ejecutaran de manera independiente
   xTaskCreate(recibirPorPuertoSerie, (const portCHAR *) "recibirPorPuertoSerie", 256, NULL, 3, NULL); // TODO: si las prioridades de las tareas de lectura y activacion son menores que esta, esta funciona, si no no
   xTaskCreate(leerSensores, (const portCHAR *) "leerSensores", 512, NULL, 2, NULL);
   xTaskCreate(activarActuador, (const portCHAR *) "activarActuador", 256, NULL, 2, NULL);
-  //xTaskCreate(enviarPorPuertoSerie, (const portCHAR *) "enviarPorPuertoSerie", 256, NULL, 1, NULL);
+  xTaskCreate(enviarPorPuertoSerie, (const portCHAR *) "enviarPorPuertoSerie", 256, NULL, 1, NULL);
 
-  // Now the task scheduler, which takes over control of scheduling individual tasks, is automatically started.
 }
 
 void loop() {}
@@ -151,8 +149,6 @@ void recibirPorPuertoSerie(void *pvParameters){
 
   char cmd;
   for (;;){
-    //if (xSemaphoreTake(semaforoActivacionActuador, 1000) == pdTRUE){ // Con un semaforo si funciona
-    //if (xSemaphoreTake(semaforoLecturaSensores, 1000) == pdTRUE && xSemaphoreTake(semaforoActivacionActuador, 100) == pdTRUE){ // TODO: Cuando se inicie la placa, esto tomara los dos semaforos, pero tras recibir un 1 o un 0 liberara un SIN liberar el otro... por lo tanto, uno de los dos semaforos (el que no libere) intentara tomarlo de nuevo!! ahi deadlock?? A standard mutex can only be taken once, so nested calls to attempt to take a standard mutex will fail (https://www.freertos.org/FreeRTOS_Support_Forum_Archive/December_2015/freertos_Behaviour_of_nested_calls_to_xSemaphoreTake_with_mutex_in_same_task_c06e6786j.html)
     if (checkSemaforos(retakeSAA, retakeSLS) == true){
       while (Serial.available() <= 0){} // TODO: solo se deberia pasar de aqui si se recibe un 0 o un 1
       Serial.println("En recibirPorPuertoSerie tras recibir algo por el puerto serie...");
@@ -201,11 +197,7 @@ void leerSensores(void *pvParameters){
   for (;;){
     if (xSemaphoreTake(semaforoLecturaSensores, 1000) == pdTRUE){ // espera semaforo
       lectura_sensores = consultarSensores(); // TODO: rellenarCon0s was done to be able to put fixed lenght Strings on the queue but I don't need that when using struct
-      /* // TODO: sincronizar con cola (ademas de semaforo) va a ser dificil, por tanto conseguir primero mostrar directamente EN ESTA TAREA por el puerto serie
       xQueueSend(cola, &lectura_sensores, portMAX_DELAY); // poner lo que devuelve consultarSensores en la cola
-      */
-      Serial.println(structToString(lectura_sensores));
-      BIledToggle();
       xSemaphoreGive(semaforoLecturaSensores); // devuelve el semaforo
     } else {
       Serial.println("Waiting to get semaphore at leerSensores...");
@@ -214,13 +206,13 @@ void leerSensores(void *pvParameters){
   }
 }
 
-/*
 void enviarPorPuertoSerie(void *pvParameters){
   (void) pvParameters;
 
   struct lecturaSensoresStruct lectura_sensores;
   for (;;){
     if (xQueueReceive(cola, &lectura_sensores, 1000) == pdPASS) { // espera elemento en cola
+      BIledToggle();
       Serial.println(structToString(lectura_sensores)); // TODO: quitarRelleno was done to be able to put fixed lenght Strings on the queue but I don't need that when using struct
     } else {
       Serial.println("Nada en la cola...");
@@ -228,4 +220,3 @@ void enviarPorPuertoSerie(void *pvParameters){
     vTaskDelay(1);  // Delay de 1 tick (15ms) para estabilidad
   }
 }
-*/
