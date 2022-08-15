@@ -7,6 +7,7 @@
 
 //Constants
 #define NUMSENSORES 6
+int ledState = 0;
 
 //Pines
 int ldrPin = 0; // analogico
@@ -37,9 +38,22 @@ char charInicio = '[';
 char charFin = ']';
 char delimitador = '/';
 
+// Estructura para coordenadas de IMU
+struct lecturaSensoresStruct {
+    float ldr;
+    float humedad;
+    float temperatura;
+    float imux;
+    float imuy;
+    float sonido;
+};
+
+
 void setup() {
 
   // For testing
+  pinMode(LED_BUILTIN, OUTPUT);
+  
   // Puerto serie
   Serial.begin(9600);
 
@@ -61,10 +75,10 @@ void setup() {
   cola = xQueueCreate(1, tamPalabraEnCola); // Cada elemento en la cola será un string de 50 caracteres
 
   // Creacion de tareas que se ejecutaran de manera independiente
-  xTaskCreate(recibirPorPuertoSerie, (const portCHAR *) "recibirPorPuertoSerie", 128, NULL, 3, NULL); // TODO: si las prioridades de las tareas de lectura y activacion son menores que esta, esta funciona, si no no
-  //xTaskCreate(leerSensores, (const portCHAR *) "leerSensores", 128, NULL, 2, NULL);
-  xTaskCreate(activarActuador, (const portCHAR *) "activarActuador", 128, NULL, 2, NULL);
-  //xTaskCreate(enviarPorPuertoSerie, (const portCHAR *) "enviarPorPuertoSerie", 128, NULL, 1, NULL);
+  xTaskCreate(recibirPorPuertoSerie, (const portCHAR *) "recibirPorPuertoSerie", 256, NULL, 3, NULL); // TODO: si las prioridades de las tareas de lectura y activacion son menores que esta, esta funciona, si no no
+  xTaskCreate(leerSensores, (const portCHAR *) "leerSensores", 512, NULL, 2, NULL);
+  xTaskCreate(activarActuador, (const portCHAR *) "activarActuador", 256, NULL, 2, NULL);
+  //xTaskCreate(enviarPorPuertoSerie, (const portCHAR *) "enviarPorPuertoSerie", 256, NULL, 1, NULL);
 
   // Now the task scheduler, which takes over control of scheduling individual tasks, is automatically started.
 }
@@ -78,35 +92,35 @@ int generarChecksum(float sensores[]){
   return 1;
 }
 
-String consultarSensores(){
-  float sensores[NUMSENSORES];
-  sensores[0] = analogRead(ldrPin); // Intensidad de la luz (LDR)
-  sensores[1] = 32.2; // Humedad
-  sensores[2] = 23.4; // Temperatura
-  sensores[3] = 1.2; // Acelerometro y Giroscopio (IMU)
-  sensores[4] = 1.3; // Acelerometro y Giroscopio (IMU)
-  sensores[5] = 100.2; // Sonido
+struct lecturaSensoresStruct consultarSensores(){
 
-  String trama = (String)charInicio + (String)"O";
-  for (int i = 0; i < NUMSENSORES ; i++) {
-    trama = trama + (String)sensores[i] + delimitador;
-  }
-  return trama + (generarChecksum(sensores)-'0') + charFin;
+  struct lecturaSensoresStruct lecturaSensores;
+  lecturaSensores.ldr = analogRead(ldrPin); // Intensidad de la luz (LDR)
+  lecturaSensores.humedad = 32.2; // Humedad
+  lecturaSensores.temperatura = 23.4; // Temperatura
+  lecturaSensores.imux = 1.2;
+  lecturaSensores.imuy = 1.3;
+  lecturaSensores.sonido = 100.2;
+  
+  return lecturaSensores;
 }
 
-String rellenarCon0s(String lectura, int tamanio){
-  int relleno = tamanio - lectura.length();
-  for (int i = 0; i < relleno ; i++){
-    lectura.concat('0');
-  }
-  return lectura;
-}
-
-String quitarRelleno(String lectura){
- return lectura.substring(0, lectura.indexOf(']')+1);
+char * structToString(struct lecturaSensoresStruct lecturaSensores){ // TODO: debo convertir el struct en un char[] (siguiendo lo que indica el enunciado del mod5)
+  static char lecturaAsArray[9];
+  lecturaAsArray[0] = '[';
+  lecturaAsArray[1] = 'O';
+  lecturaAsArray[2] = (char)lecturaSensores.ldr;
+  lecturaAsArray[3] = (char)lecturaSensores.humedad;
+  lecturaAsArray[4] = (char)lecturaSensores.temperatura;
+  lecturaAsArray[5] = (char)lecturaSensores.imux;
+  lecturaAsArray[6] = (char)lecturaSensores.imuy;
+  lecturaAsArray[7] = (char)lecturaSensores.sonido;
+  lecturaAsArray[8] = ']';
+  return lecturaAsArray;
 }
 
 bool checkSemaforos(bool retakeSAA, bool retakeSLS){
+  Serial.println("At checkSemaforos");
   bool res = false;
   if (retakeSAA == true){
     res = (xSemaphoreTake(semaforoActivacionActuador, 1000) == pdTRUE);
@@ -114,7 +128,17 @@ bool checkSemaforos(bool retakeSAA, bool retakeSLS){
   if (retakeSLS == true){
     res = (xSemaphoreTake(semaforoLecturaSensores, 1000) == pdTRUE);
   }
+  Serial.println(res);
   return res;
+}
+
+void BIledToggle(){
+  if (ledState == 0){
+    digitalWrite(LED_BUILTIN, 1);
+  } else {
+    digitalWrite(LED_BUILTIN, 0);
+  }
+  ledState = !ledState;
 }
 
 // ############################ TAREAS ############################
@@ -166,67 +190,42 @@ void activarActuador(void *pvParameters){
     } else {
       Serial.println("Waiting to get semaphore at activarActuador...");
     }
-    //vTaskDelay(1);  // Delay de 1 tick (15ms) para estabilidad
-  }
-}
-
-void recibirPorPuertoSerie_og(void *pvParameters){
-  (void) pvParameters;
-
-  xSemaphoreTake(semaforoLecturaSensores, portMAX_DELAY);
-  xSemaphoreTake(semaforoActivacionActuador, portMAX_DELAY);
-
-  char cmd;
-  for (;;){
-    //if (xSemaphoreTake(semaforoLecturaSensores, portMAX_DELAY) == pdTRUE && xSemaphoreTake(semaforoActivacionActuador, portMAX_DELAY) == pdTRUE){
-    while (Serial.available() <= 0){}
-    Serial.println("En recibirPorPuertoSerie tras recibir algo por el puerto serie...");
-    cmd = Serial.read();
-    if (cmd == '0'){
-      Serial.println("Recibido 0");
-      xSemaphoreGive(semaforoLecturaSensores); //libera semaforoLecturaSensores
-
-    } else if (cmd == '1') {
-      Serial.println("Recibido 1");
-      xSemaphoreGive(semaforoActivacionActuador);//libera semaforoActivacionActuador
-      //xSemaphoreGive(semaforoLecturaSensores); //libera semaforoLecturaSensores
-      //vTaskDelay(10000);  // Delay de 1 tick (15ms) para estabilidad
-    }
-    //vTaskDelete(recibirPorPuertoSerie);
     vTaskDelay(1);  // Delay de 1 tick (15ms) para estabilidad
-    //}
   }
 }
 
 void leerSensores(void *pvParameters){
   (void) pvParameters;
 
-  String lectura_sensores;
+  struct lecturaSensoresStruct lectura_sensores;
   for (;;){
     if (xSemaphoreTake(semaforoLecturaSensores, 1000) == pdTRUE){ // espera semaforo
-      lectura_sensores = rellenarCon0s(consultarSensores(), tamPalabraEnCola);
+      lectura_sensores = consultarSensores(); // TODO: rellenarCon0s was done to be able to put fixed lenght Strings on the queue but I don't need that when using struct
       /* // TODO: sincronizar con cola (ademas de semaforo) va a ser dificil, por tanto conseguir primero mostrar directamente EN ESTA TAREA por el puerto serie
       xQueueSend(cola, &lectura_sensores, portMAX_DELAY); // poner lo que devuelve consultarSensores en la cola
       */
-      Serial.println(lectura_sensores);
+      Serial.println(structToString(lectura_sensores));
+      BIledToggle();
       xSemaphoreGive(semaforoLecturaSensores); // devuelve el semaforo
     } else {
       Serial.println("Waiting to get semaphore at leerSensores...");
     }
-    //vTaskDelay(1);  // Delay de 1 tick (15ms) para estabilidad
+    vTaskDelay(1);  // Delay de 1 tick (15ms) para estabilidad
   }
 }
 
+/*
 void enviarPorPuertoSerie(void *pvParameters){
   (void) pvParameters;
 
-  String lectura_sensores;
+  struct lecturaSensoresStruct lectura_sensores;
   for (;;){
     if (xQueueReceive(cola, &lectura_sensores, 1000) == pdPASS) { // espera elemento en cola
-      Serial.println(quitarRelleno(lectura_sensores));
+      Serial.println(structToString(lectura_sensores)); // TODO: quitarRelleno was done to be able to put fixed lenght Strings on the queue but I don't need that when using struct
     } else {
-      Serial.println("Nada en la cola...")
+      Serial.println("Nada en la cola...");
     }
-    //vTaskDelay(1);  // Delay de 1 tick (15ms) para estabilidad
+    vTaskDelay(1);  // Delay de 1 tick (15ms) para estabilidad
   }
 }
+*/
