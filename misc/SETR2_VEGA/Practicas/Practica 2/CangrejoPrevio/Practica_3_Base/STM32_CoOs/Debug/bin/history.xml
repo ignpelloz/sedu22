@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<history>
+   <processor signature="arm-none-eabi-gcc -mcpu=cortex-m4 -mthumb -g -nostartfiles -Map=STM32_CoOs.map -O0 --gc-sections -LC:\CooCox\CoIDE\configuration\ProgramData\STM32_CoOs -TC:\CooCox\CoIDE\configuration\ProgramData\STM32_CoOs/arm-gcc-link.ld -g">
+      <target file="STM32_CoOs.elf" lastModified="166925ade35">
+         <source file="..\obj\led_driver.o" lastModified="16691a67f54"/>
+         <source file="..\obj\kernelHeap.o" lastModified="16691a68098"/>
+         <source file="..\obj\core.o" lastModified="16691a68194"/>
+         <source file="..\obj\timer.o" lastModified="16691a68325"/>
+         <source file="..\obj\utility.o" lastModified="16691a68419"/>
+         <source file="..\obj\stm32f4xx_usart.o" lastModified="16691a685ac"/>
+         <source file="..\obj\joy_driver.o" lastModified="16691a686da"/>
+         <source file="..\obj\task.o" lastModified="16691a687f1"/>
+         <source file="..\obj\startup_stm32f4xx.o" lastModified="16691a688c4"/>
+         <source file="..\obj\serviceReq.o" lastModified="16691a689a4"/>
+         <source file="..\obj\main.o" lastModified="16691a68ac7"/>
+         <source file="..\obj\stm32f4xx_rcc.o" lastModified="16691a68c27"/>
+         <source file="..\obj\stm32f4xx_adc.o" lastModified="16691a68dd5"/>
+         <source file="..\obj\printf.o" lastModified="16691a68f37"/>
+         <source file="..\obj\mbox.o" lastModified="16691a69051"/>
+         <source file="..\obj\mm.o" lastModified="16691a6914d"/>
+         <source file="..\obj\stm32f4xx_fsmc.o" lastModified="16691a69278"/>
+         <source file="..\obj\LedTask.o" lastModified="166925ad9b5"/>
+         <source file="..\obj\time.o" lastModified="16691a69674"/>
+         <source file="..\obj\JoyTmr.o" lastModified="16691a69797"/>
+         <source file="..\obj\event.o" lastModified="16691a69889"/>
+         <source file="..\obj\stm32f4xx_gpio.o" lastModified="16691a699ad"/>
+         <source file="..\obj\stm32f4xx_flash.o" lastModified="16691a69b1f"/>
+         <source file="..\obj\system_stm32f4xx.o" lastModified="16691a69c23"/>
+         <source file="..\obj\syscalls.o" lastModified="16691a69d58"/>
+         <source file="..\obj\stm32f4xx_dma.o" lastModified="16691a69ea9"/>
+         <source file="..\obj\queue.o" lastModified="16691a69fad"/>
+         <source file="..\obj\port.o" lastModified="16691a6a083"/>
+         <source file="..\obj\mutex.o" lastModified="16691a6a192"/>
+         <source file="..\obj\flag.o" lastModified="16691a6a298"/>
+         <source file="..\obj\arch.o" lastModified="16691a6a3d0"/>
+         <source file="..\obj\misc.o" lastModified="16691a6a4ff"/>
+         <source file="..\obj\sem.o" lastModified="16691a6a5c5"/>
+         <source file="..\obj\hook.o" lastModified="16691a6a698"/>
+      </target>
+   </processor>
+</history>

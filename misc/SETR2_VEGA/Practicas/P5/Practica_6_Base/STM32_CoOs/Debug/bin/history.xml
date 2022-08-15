@@ -1,0 +1,46 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<history>
+   <processor signature="arm-none-eabi-gcc -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=softfp -mthumb -Wall -g -nostartfiles -Map=STM32_CoOs.map -O0 --gc-sections -lm -lgcc -lc -lnosys -LC:\CooCox\CoIDE\configuration\ProgramData\STM32_CoOs -TC:\CooCox\CoIDE\configuration\ProgramData\STM32_CoOs/arm-gcc-link.ld -g">
+      <target file="STM32_CoOs.elf" lastModified="167a320e06c">
+         <source file="..\obj\led_driver.o" lastModified="1677efabf71"/>
+         <source file="..\obj\kernelHeap.o" lastModified="1677efabfee"/>
+         <source file="..\obj\core.o" lastModified="1677efac00d"/>
+         <source file="..\obj\timer.o" lastModified="1677efac04b"/>
+         <source file="..\obj\utility.o" lastModified="1677efac07a"/>
+         <source file="..\obj\stm32f4xx_usart.o" lastModified="1677efac0e7"/>
+         <source file="..\obj\joy_driver.o" lastModified="1677efac135"/>
+         <source file="..\obj\SerialTask.o" lastModified="167a320de98"/>
+         <source file="..\obj\task.o" lastModified="1677efac2bb"/>
+         <source file="..\obj\startup_stm32f4xx.o" lastModified="1677efac2ea"/>
+         <source file="..\obj\serviceReq.o" lastModified="1677efac309"/>
+         <source file="..\obj\analogJoy_driver.o" lastModified="1677efac348"/>
+         <source file="..\obj\main.o" lastModified="1677efac3a5"/>
+         <source file="..\obj\stm32f4xx_rcc.o" lastModified="1677efac422"/>
+         <source file="..\obj\motor_driver.o" lastModified="1677efac470"/>
+         <source file="..\obj\stm32f4xx_adc.o" lastModified="1677efac4dd"/>
+         <source file="..\obj\printf.o" lastModified="1677efac53b"/>
+         <source file="..\obj\mbox.o" lastModified="1677efac598"/>
+         <source file="..\obj\mm.o" lastModified="1677efac5e6"/>
+         <source file="..\obj\stm32f4xx_fsmc.o" lastModified="1677efac673"/>
+         <source file="..\obj\LedTask.o" lastModified="1677efac78c"/>
+         <source file="..\obj\time.o" lastModified="1677efac7ba"/>
+         <source file="..\obj\JoyTmr.o" lastModified="1677efac808"/>
+         <source file="..\obj\event.o" lastModified="1677efac847"/>
+         <source file="..\obj\stm32f4xx_gpio.o" lastModified="1677efac895"/>
+         <source file="..\obj\stm32f4xx_flash.o" lastModified="1677efac8f2"/>
+         <source file="..\obj\servo_driver.o" lastModified="1677efac931"/>
+         <source file="..\obj\system_stm32f4xx.o" lastModified="1677efac96f"/>
+         <source file="..\obj\syscalls.o" lastModified="1677efac9ae"/>
+         <source file="..\obj\stm32f4xx_dma.o" lastModified="1677efac9fc"/>
+         <source file="..\obj\queue.o" lastModified="1677efaca3a"/>
+         <source file="..\obj\port.o" lastModified="1677efaca59"/>
+         <source file="..\obj\mutex.o" lastModified="1677efaca88"/>
+         <source file="..\obj\flag.o" lastModified="1677efacac6"/>
+         <source file="..\obj\arch.o" lastModified="1677efacaf5"/>
+         <source file="..\obj\misc.o" lastModified="1677efacb34"/>
+         <source file="..\obj\sem.o" lastModified="1677efacb62"/>
+         <source file="..\obj\hook.o" lastModified="1677efacb82"/>
+         <source file="..\obj\stm32f4xx_tim.o" lastModified="1677efacc3d"/>
+      </target>
+   </processor>
+</history>
