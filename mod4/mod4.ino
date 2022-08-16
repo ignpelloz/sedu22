@@ -317,8 +317,8 @@ void enviarPorPuertoSerie(void *pvParameters){
       BIledToggle();
       char lecturaAsArray[55] = {};
       structToCharArray(lectura_sensores,lecturaAsArray); // Se transforma el struct en un char array (trama) que incluye el checksum
-      //printDirecto(lectura_sensores);
-      Serial.println(lecturaAsArray);
+      printDirecto(lectura_sensores);
+      //Serial.println(lecturaAsArray);
     }
     vTaskDelay(1);  // Delay de 1 tick (15ms) para estabilidad
   }
