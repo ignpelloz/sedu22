@@ -6,11 +6,8 @@
 - Deberia usar un semaforo para la cola? es decir, una tarea no puede escribir si otra esta leyendo
 
 
-- Si la cola no funciona con elementos de tipo String, usar un struct tal y como recomiendan en el video de teoria?
-
-
 - Finalizar modulos 4 y 5:
-  1. Probar mod4/trabajo/trabajo.ino
+  1. Probar mod4/mod4.ino
   2. Probar mod5/trabajo_sinEj4.ino
   3. Cuando ambos funcionen, implementar mod5/trabajo.ino (es el ejercicio 4 del mod5, basicamente combina los ficheros de los pasos 1 y 2). Recordar que tengo 6 sensores y 2 actuadores.
 

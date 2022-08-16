@@ -19,8 +19,7 @@ DB_NAME = "SEDU22"
 latenciaEntreLecturas = 5
 
 def run_query(query=""):
-    datos = [DB_HOST, DB_USER, DB_PASS, DB_NAME]
-    conn = MySQLdb.connect(*datos) # TODO: por que la estrella?
+    conn = MySQLdb.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
     cursor = conn.cursor()
     cursor.execute(query)
     res = cursor.fetchone()

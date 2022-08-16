@@ -10,15 +10,13 @@ DB_NAME = "SEDU22"
 
 def run_query(query=""):
     datos = [DB_HOST, DB_USER, DB_PASS, DB_NAME]
-    conn = MySQLdb.connect(*datos) # TODO: por que la estrella?
+    conn = MySQLdb.connect(*datos) # el asterisco "expande" la lista en argumentos
     cursor = conn.cursor()
     cursor.execute(query)
     conn.commit()
     cursor.close()
     conn.close()
     return
-
-# TODO: usar comillas simples en lugar de dobles?
 
 # Para conocer el puerto, ejecutar: ls /dev/tty* antes y despues de conectar el arduino al pc. El dispositivo que falte en el primer ls es nuestro puerto
 puerto = "/dev/ttyACM0"
@@ -47,8 +45,6 @@ while(1):
         # Se inserta lo obtenido en la BD
         query = "INSERT INTO sensores (x,y,z) VALUES ('%s','%s','%s')" % (separadas[0],separadas[1],separadas[2])
         run_query(query)
-
-        # TODO: comprobar checksum
 
     # Delay para no ser muy pesado
     time.sleep(1)

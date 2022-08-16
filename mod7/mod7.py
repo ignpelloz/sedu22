@@ -9,8 +9,7 @@ DB_PASS = "pi"
 DB_NAME = "SEDU22"
 
 def run_query(query=""):
-    datos = [DB_HOST, DB_USER, DB_PASS, DB_NAME]
-    conn = MySQLdb.connect(*datos) # TODO: por que la estrella?
+    conn = MySQLdb.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
     cursor = conn.cursor()
     cursor.execute(query)
     conn.commit()
@@ -33,8 +32,8 @@ micro = serial.Serial(puerto, 9600, timeout=1)
 time.sleep(2)
 
 def procesarLectura(cadena):
-    "Convierte el array de bytes en string, elimina caracteres de inicio y fin y divide los datos. "
-    return cadena.decode("utf-8").lstrip("[").rstrip("]\r\n").split(caracterDelimitador)
+    "Convierte el array de bytes en string, elimina caracteres de inicio y fin, 'O' y divide los datos. "
+    return cadena.decode("utf-8").lstrip("[O").rstrip("]\r\n").split(caracterDelimitador)
 
 def comprobarChecksum(separadas):
     checksumObtenido = 0.0
@@ -61,7 +60,7 @@ while(1):
         # Se muestran los datos (a excepcion del checksum)
         print(separadas[:-1])
 
-        # Se inserta lo obtenido en la BD
+        # Se inserta lo obtenido en la BD # TODO: si la query falla se debe salir de la iteracion o al menos no permitir actualizar ThingSpeak (ya que subira un registro que ya se subio)
         run_query("INSERT INTO sensores (luminosidad,humedad,temperatura,imux,imuy,sonido) \
                   VALUES ('%s','%s','%s','%s','%s','%s');" % (separadas[0],separadas[1],separadas[2],separadas[3],separadas[4],separadas[5]))
         open("/tmp/nuevoRegistroEnDB", "w")

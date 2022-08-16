@@ -1,5 +1,3 @@
-// THIS ONE HAS ALL THE 4 TASKS
-
 #include <Arduino_FreeRTOS.h>
 #include <semphr.h>
 #include <queue.h>
@@ -36,6 +34,8 @@ QueueHandle_t cola;
 char charInicio = '[';
 char charFin = ']';
 char delimitador = '/';
+int tamLecturaSensor = 7; // Queue to string
+char delimitador[2] = "/"; // Queue to string
 
 // Estructura para coordenadas de IMU
 struct lecturaSensoresStruct {
@@ -52,7 +52,7 @@ void setup() {
 
   // For testing
   pinMode(LED_BUILTIN, OUTPUT);
-  
+
   // Puerto serie
   Serial.begin(9600);
 
@@ -67,8 +67,6 @@ void setup() {
   semaforoActivacionActuador = xSemaphoreCreateMutex();  // Mutex semaforo para permitir la activacion del actuador
   xSemaphoreGive(semaforoLecturaSensores);  // Liberar semaforo lectura sensores // TODO: no deberia de partida ocupar los semaforos (xSemaphoreTake) y despues liberarlos en recibirPorPuertoSerie segun reciba 0 o 1?
   xSemaphoreGive(semaforoActivacionActuador);  // Liberar semaforo activacion del actuador
-  //xSemaphoreTake(semaforoLecturaSensores, portMAX_DELAY);
-  //xSemaphoreTake(semaforoActivacionActuador, portMAX_DELAY);
 
   // Cola
   cola = xQueueCreate(1, sizeof(struct lecturaSensoresStruct)); // Cada elemento en la cola será un string de 50 caracteres
@@ -85,9 +83,17 @@ void loop() {}
 
 // ############################ FUNCIONES AUX ############################
 
-
-int generarChecksum(float sensores[]){
-  return 1;
+int generarChecksum(struct lecturaSensoresStruct lecturaSensores){
+  float res = 0.0;
+  res += lecturaSensores.ldr;
+  res += lecturaSensores.humedad;
+  res += lecturaSensores.temperatura;
+  res += lecturaSensores.imux;
+  res += lecturaSensores.imuy;
+  res += lecturaSensores.sonido;
+  String resString = (String)res; // Se convierte lo obtenido en una cadena
+  char resByte = resString[resString.indexOf('.')-1]; // Se toma el ultimo caracter a la izquierda del punto (ya que es un float): ese será el checksum
+  return resByte;
 }
 
 struct lecturaSensoresStruct consultarSensores(){
@@ -96,25 +102,53 @@ struct lecturaSensoresStruct consultarSensores(){
   lecturaSensores.ldr = analogRead(ldrPin); // Intensidad de la luz (LDR)
   lecturaSensores.humedad = 32.2; // Humedad
   lecturaSensores.temperatura = 23.4; // Temperatura
-  lecturaSensores.imux = 1.2;
-  lecturaSensores.imuy = 1.3;
+  lecturaSensores.imux = 2;
+  lecturaSensores.imuy = 3;
   lecturaSensores.sonido = 100.2;
-  
+
   return lecturaSensores;
 }
 
-char * structToString(struct lecturaSensoresStruct lecturaSensores){ // TODO: debo convertir el struct en un char[] (siguiendo lo que indica el enunciado del mod5)
-  static char lecturaAsArray[9];
+char * structToString(struct lecturaSensoresStruct lecturaSensores, char* lecturaAsArray){
+
   lecturaAsArray[0] = '[';
   lecturaAsArray[1] = 'O';
-  lecturaAsArray[2] = (char)lecturaSensores.ldr;
-  lecturaAsArray[3] = (char)lecturaSensores.humedad;
-  lecturaAsArray[4] = (char)lecturaSensores.temperatura;
-  lecturaAsArray[5] = (char)lecturaSensores.imux;
-  lecturaAsArray[6] = (char)lecturaSensores.imuy;
-  lecturaAsArray[7] = (char)lecturaSensores.sonido;
-  lecturaAsArray[8] = ']';
-  return lecturaAsArray;
+
+  char ldrCA[tamLecturaSensor];
+  ((String)lecturaSensores.ldr).toCharArray(ldrCA, tamLecturaSensor);
+  strcat(lecturaAsArray, ldrCA);
+  strcat(lecturaAsArray, delimitador);
+
+  char humedadCA[tamLecturaSensor];
+  ((String)lecturaSensores.humedad).toCharArray(humedadCA, tamLecturaSensor);
+  strcat(lecturaAsArray, humedadCA);
+  strcat(lecturaAsArray, delimitador);
+
+  char temperaturaCA[tamLecturaSensor];
+  ((String)lecturaSensores.temperatura).toCharArray(temperaturaCA, tamLecturaSensor);
+  strcat(lecturaAsArray, temperaturaCA);
+  strcat(lecturaAsArray, delimitador);
+
+  char imuxCA[tamLecturaSensor];
+  ((String)lecturaSensores.imux).toCharArray(imuxCA, tamLecturaSensor);
+  strcat(lecturaAsArray, imuxCA);
+  strcat(lecturaAsArray, delimitador);
+
+  char imuyCA[tamLecturaSensor];
+  ((String)lecturaSensores.imuy).toCharArray(imuyCA, tamLecturaSensor);
+  strcat(lecturaAsArray, imuyCA);
+  strcat(lecturaAsArray, delimitador);
+
+  char sonidoCA[tamLecturaSensor];
+  ((String)lecturaSensores.sonido).toCharArray(sonidoCA, tamLecturaSensor);
+  strcat(lecturaAsArray, sonidoCA);
+  strcat(lecturaAsArray, delimitador);
+
+  char checksum[2];
+  checksum[0] = (char)generarChecksum(lecturaSensores);
+  strcat(lecturaAsArray, checksum);
+  strcat(lecturaAsArray, "]");
+
 }
 
 bool checkSemaforos(bool retakeSAA, bool retakeSLS){
@@ -150,7 +184,7 @@ void recibirPorPuertoSerie(void *pvParameters){
   char cmd;
   for (;;){
     if (checkSemaforos(retakeSAA, retakeSLS) == true){
-      while (Serial.available() <= 0){} // TODO: solo se deberia pasar de aqui si se recibe un 0 o un 1
+      while (Serial.available() <= 0){} // TODO: que pasa si recibo algo que no es 0/1 ? si no pasa nada, ignorar
       Serial.println("En recibirPorPuertoSerie tras recibir algo por el puerto serie...");
       cmd = Serial.read();
       if (cmd == '1') {
@@ -164,8 +198,6 @@ void recibirPorPuertoSerie(void *pvParameters){
         retakeSLS = true;
         xSemaphoreGive(semaforoLecturaSensores);
       }
-    } else {
-      Serial.println("Waiting to get semaphores at recibirPorPuertoSerie...");
     }
     vTaskDelay(1); // Delay de 1 tick (15ms) para estabilidad (TODO: sin este delay aqui, esta tarea toma el semaforo de nuevo antes que activarActuador
   }
@@ -183,8 +215,6 @@ void activarActuador(void *pvParameters){
         servoPos = 0;
       }
       xSemaphoreGive(semaforoActivacionActuador); // devuelve el semaforo
-    } else {
-      Serial.println("Waiting to get semaphore at activarActuador...");
     }
     vTaskDelay(1);  // Delay de 1 tick (15ms) para estabilidad
   }
@@ -196,11 +226,9 @@ void leerSensores(void *pvParameters){
   struct lecturaSensoresStruct lectura_sensores;
   for (;;){
     if (xSemaphoreTake(semaforoLecturaSensores, 1000) == pdTRUE){ // espera semaforo
-      lectura_sensores = consultarSensores(); // TODO: rellenarCon0s was done to be able to put fixed lenght Strings on the queue but I don't need that when using struct
+      lectura_sensores = consultarSensores(); // consultarSensores devuelve un struct que se debe poner en la cola
       xQueueSend(cola, &lectura_sensores, portMAX_DELAY); // poner lo que devuelve consultarSensores en la cola
       xSemaphoreGive(semaforoLecturaSensores); // devuelve el semaforo
-    } else {
-      Serial.println("Waiting to get semaphore at leerSensores...");
     }
     vTaskDelay(1);  // Delay de 1 tick (15ms) para estabilidad
   }
@@ -211,11 +239,15 @@ void enviarPorPuertoSerie(void *pvParameters){
 
   struct lecturaSensoresStruct lectura_sensores;
   for (;;){
-    if (xQueueReceive(cola, &lectura_sensores, 1000) == pdPASS) { // espera elemento en cola
-      BIledToggle();
-      Serial.println(structToString(lectura_sensores)); // TODO: quitarRelleno was done to be able to put fixed lenght Strings on the queue but I don't need that when using struct
-    } else {
-      Serial.println("Nada en la cola...");
+    // TODO: ok esperar al semaforo semaforoLecturaSensores aqui? una vez que lo suelte leerSensores, esta tarea lo podria tomar tomar y siempre sera despues, ya que tiene prioridad menor
+    if (xSemaphoreTake(semaforoLecturaSensores, 1000) == pdTRUE){ // espera semaforo
+      if (xQueueReceive(cola, &lectura_sensores, 1000) == pdPASS) { // Se espera a obtener un elemento (un struct) de la cola
+        BIledToggle();
+        char lecturaAsArray[55] = {};
+        structToString(lectura_sensores,lecturaAsArray); // Se transforma el struct en un string (trama) que incluye el checksum
+        Serial.println(lecturaAsArray);
+      }
+      xSemaphoreGive(semaforoLecturaSensores); // devuelve el semaforo
     }
     vTaskDelay(1);  // Delay de 1 tick (15ms) para estabilidad
   }
