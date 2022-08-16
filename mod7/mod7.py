@@ -47,11 +47,11 @@ def comprobarChecksum(separadas):
 while(1):
     # Ejecutar solo si el puerto serie esta abierto
     if(micro.isOpen()):
-        # Mandar comando de lectura de sensores. Nota: en python los puertos series no transmiten strings si no array de bytes
+        # Mandar comando de lectura de sensores. Nota: en python los puertos series no transmiten strings si no array de bytes TODO: por tanto, en .ino debo usar Serial.print (human-readable ASCII text) o Serial.write (bytes)?
         micro.write(b"[S]")
 
         # Lectura de la respuesta del controlador
-        separadas = procesarLectura(micro.readline())
+        separadas = procesarLectura(micro.readline()) # TODO: para poder usar esto, en .ino debo usar Serial.println o Serial.write ?
 
         # Si el checksum es incorrecto, se ignora el resto de la iteracion
         if comprobarChecksum(separadas) is False:
