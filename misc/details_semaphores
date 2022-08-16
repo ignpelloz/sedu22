@@ -1,0 +1,13 @@
+https://controllerstech.com/how-to-use-binary-semaphore-in-stm32/:
+
+Let’s say there is a LOW Priority Task running in the critical section. A HIGH Priority Task can preempt the LPT at any point in time. But if the LPT have the semaphore, and it doesn’t release it until it comes out of the critical section, than HPT have no other option but to wait for the semaphore, and it can’t preempt the LOW Task.
+
+
+https://en.wikipedia.org/wiki/Semaphore_%28programming%29#Semaphores_vs._mutexes: 
+
+The differences between them are in how they are used. While a binary semaphore may be colloquially referred to as a mutex, a true mutex has a more specific use-case and definition, in that only the task that locked the mutex is supposed to unlock its
+
+
+https://www.freertos.org/RTOS-task-priority.html:
+
+Low priority numbers denote low priority tasks

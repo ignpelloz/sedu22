@@ -1,0 +1,63 @@
+#include <Arduino_FreeRTOS.h>
+#include <semphr.h>
+
+// Defino 4 tareas
+void recibirPorPuertoSerie( void *pvParameters );
+void enviarPorPuertoSerie( void *pvParameters );
+
+// Semaforos
+SemaphoreHandle_t illoSemafore;  // Mutex semaforo para permitir la activacion del actuador
+
+char ultimoComando = 'n';
+
+void setup() {
+
+  // Puerto serie
+  Serial.begin(9600);
+  
+  if ( illoSemafore == NULL )  // Check to confirm that the Serial Semaphore has not already been created.
+  {
+    illoSemafore = xSemaphoreCreateMutex();  // Create a mutex semaphore we will use to manage the Serial Port
+    if ( ( illoSemafore ) != NULL )
+      xSemaphoreGive( ( illoSemafore) );  // Make the Serial Port available for use, by "Giving" the Semaphore.
+      //xSemaphoreTake(illoSemafore, portMAX_DELAY);
+  }
+  
+  // Creacion de tareas que se ejecutaran de manera independiente
+  xTaskCreate(enviarPorPuertoSerie, (const portCHAR *) "enviarPorPuertoSerie", 128, NULL, 1, NULL);
+  xTaskCreate(recibirPorPuertoSerie, (const portCHAR *) "recibirPorPuertoSerie", 128, NULL, 2, NULL);
+}
+
+void loop() {}
+
+// ############################ TAREAS ############################
+
+void recibirPorPuertoSerie(void *pvParameters){
+  (void) pvParameters;
+  char cmd;
+  for (;;){
+    Serial.println("recibirPorPuertoSerie dentro del for, antes del semaphore check");
+    if (xSemaphoreTake(illoSemafore, 100 ) == pdTRUE){ // espera semaforo // TODO: si no se da este semaforo nunca, llegara un punto en el que se tengan dos semaforos libres, que pasa en ese caso? ahi es cuando entra en juego la prioridad, entiendo
+      Serial.println("recibirPorPuertoSerie");
+      while (Serial.available() <= 0){}
+      Serial.println("recibirPorPuertoSerie en el if");
+      ultimoComando = Serial.read();
+      xSemaphoreGive(illoSemafore);         
+      Serial.println("recibirPorPuertoSerie despues del if");
+    }
+    vTaskDelay(1);  // Delay de 1 tick (15ms) para estabilidad
+  }
+}
+
+void enviarPorPuertoSerie(void *pvParameters){
+  (void) pvParameters;
+
+  for (;;){
+    if (xSemaphoreTake(illoSemafore, portMAX_DELAY) == pdTRUE){ // espera semaforo TODO: Necesaria esta espera si ya espera para la cola?
+      Serial.println("enviarPorPuertoSerie");
+      Serial.println(ultimoComando);
+      xSemaphoreGive(illoSemafore); 
+    }
+    vTaskDelay(1);  // Delay de 1 tick (15ms) para estabilidad
+  }
+}

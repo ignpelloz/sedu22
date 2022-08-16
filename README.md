@@ -19,3 +19,6 @@
 
 
 - Donde puedo incluir un pulsador?
+
+
+- Slow blink of L means task run out of memory and fast blink means the total requested stack size (from all the 4 xTaskCreate) exceeds the heap size?
