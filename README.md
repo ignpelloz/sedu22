@@ -30,3 +30,8 @@
 - Debo reducir la memoria utilizada:
   - https://www.megunolink.com/articles/three-methods-for-reducing-arduino-ram-usage/
   - https://create.arduino.cc/projecthub/john-bradnam/reducing-your-memory-usage-26ca05
+
+
+- El DHT11 y la IMU no necesitan resistencia, por tanto se conectan muy facilmente, hacerlo ya para el mod 4:
+  - https://lastminuteengineers.com/dht11-module-arduino-tutorial/#:~:text=ground%20of%20Arduino.-,Wiring%20DHT11%20Module%20to%20Arduino,-Let%E2%80%99s%20hook%20the
+  - https://forum.arduino.cc/t/having-trouble-using-imu-sensor-icm-20689-with-arduino-i2c/692145/10 (viendo los videos que entregue el anio pasado, conecte mi IMU con solo 4 cables, todos a 4 pines adyacentes en un extremo: VCC (5v), GND, SCL y SDA. Estos dos ultimos van conectados a los pines SCL y SDA del arduino, en la parte de pines de "communication")

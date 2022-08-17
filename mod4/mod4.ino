@@ -1,20 +1,33 @@
 #include <Arduino_FreeRTOS.h>
 #include <semphr.h>
 #include <queue.h>
+#include <DHT.h>
+#include <Wire.h>
 #include <Servo.h>
 
 // Pines
 #define ldrPin 0 // analogico (was int)
 #define servoPin 3 // digital (was int)
+#define dhtPin 2 // DHT en el pin 2
 
-// Caracteres especiales de las respuestas (lecturas) / peticiones [S] y [A,..]
-#define charInicio '['
-#define charFin ']'
-#define tamLecturaSensor 7; // Queue to string
-char delimitador[2] = "/"; // Queue to string
+// Tengo DHT 11 en lugar de 22
+#define DHTTYPE DHT11
+DHT dht(dhtPin, DHTTYPE);
 
-uint_8 ledState = 0;
-uint_8 servoPos = 180;
+// IMU
+#define MPU 0x68 //Dirección I2C de la IMU
+#define A_R 16384.0 //Ratios de conversion
+#define G_R 131.0 //Ratios de conversion
+#define RAD_TO_DEG 57.295779 //Radianes a grados 180/PI
+
+//La MPU-6050 da los valores en enteros de 16 bits
+//valores sin refinar
+int16_t AcX, AcY, AcZ, GyX, GyY, GyZ;
+
+//Angulos
+float Acc[2];
+float Gy[2];
+float Angle[2];
 
 // Servo
 Servo servoMotor;
@@ -33,6 +46,22 @@ bool retakeSLS = true;
 
 // Cola
 QueueHandle_t cola;
+
+// Caracteres especiales de las respuestas (lecturas) / peticiones [S] y [A,..]
+#define charInicio '['
+#define charFin ']'
+#define tamLecturaSensor 7; // Queue to string
+char delimitador[2] = "/"; // Queue to string
+
+// Usados para testear (led blink y servo toggle)
+uint_8 ledState = 0;
+uint_8 servoPos = 180;
+
+// Estructura para coordenadas de IMU
+struct coordenadas {
+    float x;
+    float y;
+};
 
 // Estructura para coordenadas de IMU
 struct lecturaSensoresStruct {
@@ -53,21 +82,26 @@ void setup() {
 
   //Sensores
   pinMode(ldrPin, INPUT);
+  dht.begin();
+  Wire.begin();
+  Wire.beginTransmission(MPU);
+  Wire.write(0x6B);
+  Wire.write(0);
+  Wire.endTransmission(true);
 
   //Actuadores
   servoMotor.attach(servoPin);
 
-  // TODO: it has to be mutex!! literally nothing happens if I use binary
   semaforoLecturaSensores = xSemaphoreCreateMutex();  // Mutex semaforo para permitir la lectura de los sensores
   semaforoActivacionActuador = xSemaphoreCreateMutex();  // Mutex semaforo para permitir la activacion del actuador
-  xSemaphoreGive(semaforoLecturaSensores);  // Liberar semaforo lectura sensores // TODO: no deberia de partida ocupar los semaforos (xSemaphoreTake) y despues liberarlos en recibirPorPuertoSerie segun reciba 0 o 1?
+  xSemaphoreGive(semaforoLecturaSensores);  // Liberar semaforo lectura sensores
   xSemaphoreGive(semaforoActivacionActuador);  // Liberar semaforo activacion del actuador
 
   // Cola
   cola = xQueueCreate(1, sizeof(struct lecturaSensoresStruct)); // Cada elemento en la cola será un string de 50 caracteres
 
   // Creacion de tareas que se ejecutaran de manera independiente
-  xTaskCreate(recibirPorPuertoSerie, (const portCHAR *) "recibirPorPuertoSerie", 500, NULL, 3, NULL); // TODO: si las prioridades de las tareas de lectura y activacion son menores que esta, esta funciona, si no no
+  xTaskCreate(recibirPorPuertoSerie, (const portCHAR *) "recibirPorPuertoSerie", 500, NULL, 3, NULL);
   xTaskCreate(leerSensores, (const portCHAR *) "leerSensores", 400, NULL, 2, NULL);
   xTaskCreate(activarActuador, (const portCHAR *) "activarActuador", 400, NULL, 2, NULL);
   xTaskCreate(enviarPorPuertoSerie, (const portCHAR *) "enviarPorPuertoSerie", 400, NULL, 1, NULL);
@@ -76,6 +110,41 @@ void setup() {
 void loop() {}
 
 // ############################ FUNCIONES AUX ############################
+
+struct coordenadas getImuMeasurement(){
+  //Leer los valores del Acelerometro de la IMU
+  Wire.beginTransmission(MPU);
+  Wire.write(0x3B); //Pedir el registro 0x3B - corresponde al Acx
+  Wire.endTransmission(false);
+  Wire.requestFrom(MPU,6, true); //A partir del 0x3B, se piden 6 registros
+  AcX=Wire.read()<<8|Wire.read(); //Cada valor ocupa 2 registros
+  AcY=Wire.read()<<8|Wire.read();
+  AcZ=Wire.read()<<8|Wire.read();
+
+  //A partir de los valores del acelerometro, se calculan los angulos Y, X
+  //respectivanente, con la formula de la tangente.
+
+  Acc[1] = atan(-1*(AcX/A_R)/sqrt(pow((AcY/A_R),2) + pow((AcZ/A_R),2)))*RAD_TO_DEG;
+  Acc[0] = atan((AcY/A_R)/sqrt(pow((AcX/A_R),2) + pow((AcZ/A_R),2)))*RAD_TO_DEG;
+
+  //Leer los valores del Giroscopio
+  Wire.beginTransmission(MPU);
+  Wire.write(0x43);
+  Wire.endTransmission(false);
+  Wire.requestFrom(MPU,4,true); //A diferencia del Acelerometro, solo se piden 4 registro:
+  GyX=Wire.read()<<8|Wire.read();
+  GyY=Wire.read()<<8|Wire.read();
+
+  //Calculo del angulo del Giroscopio
+  Gy[0] = GyX/G_R;
+  Gy[1] = GyY/G_R;
+
+  //aplicar el Filtro Complenentario
+  struct coordenadas coordenadasIMU;
+  coordenadasIMU.x = 0.98 *(Angle[0]+Gy[0]*0.010) + 0.02*Acc[0];
+  coordenadasIMU.y = 0.98 *(Angle[1]+Gy[1]*0.010) + 0.02*Acc[1];
+  return coordenadasIMU;
+}
 
 char generarChecksum(struct lecturaSensoresStruct lecturaSensores){
   float res = 0.0;
@@ -102,10 +171,16 @@ char generarChecksum(struct lecturaSensoresStruct lecturaSensores){
 struct lecturaSensoresStruct consultarSensores(){
 
   struct lecturaSensoresStruct lecturaSensores;
-  lecturaSensores.ldr = analogRead(ldrPin); // Intensidad de la luz (LDR)
-  lecturaSensores.humedad = 32.2; // Humedad
-  lecturaSensores.temperatura = 23.4; // Temperatura
+  lecturaSensores.ldr = analogRead(ldrPin);
+  //lecturaSensores.humedad = dht.readHumidity();
+  lecturaSensores.humedad = 32.2;
+  //lecturaSensores.temperatura = dht.readTemperature();
+  lecturaSensores.temperatura = 23.4;
+
+  //struct coordenadas imuMeasurements = getImuMeasurement();
+  //lecturaSensores.imux = imuMeasurements.x;
   lecturaSensores.imux = 2;
+  //lecturaSensores.imuy = imuMeasurements.y;
   lecturaSensores.imuy = 3;
 
   return lecturaSensores;
