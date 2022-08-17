@@ -3,17 +3,18 @@
 #include <queue.h>
 #include <Servo.h>
 
-//Constants
-#define NUMSENSORES 6
-int ledState = 0;
-int servoPos = 180;
+// Pines
+#define ldrPin 0 // analogico (was int)
+#define servoPin 3 // digital (was int)
 
-//Pines
-int ldrPin = 0; // analogico
-int servoPin = 3;
+// Caracteres especiales de las respuestas (lecturas) / peticiones [S] y [A,..]
+#define charInicio '['
+#define charFin ']'
+#define tamLecturaSensor 7; // Queue to string
+char delimitador[2] = "/"; // Queue to string
 
-int ldrValue;
-int cmd;
+uint_8 ledState = 0;
+uint_8 servoPos = 180;
 
 // Servo
 Servo servoMotor;
@@ -29,15 +30,9 @@ SemaphoreHandle_t semaforoLecturaSensores;  // Mutex semaforo para permitir la l
 SemaphoreHandle_t semaforoActivacionActuador;  // Mutex semaforo para permitir la activacion del actuador
 bool retakeSAA = true;
 bool retakeSLS = true;
-  
+
 // Cola
 QueueHandle_t cola;
-
-// Caracteres especiales de las respuestas (lecturas) TODO: deben ser independientes de las tramas de peticion [S] y [A,..]
-char charInicio = '[';
-char charFin = ']';
-int tamLecturaSensor = 7; // Queue to string
-char delimitador[2] = "/"; // Queue to string
 
 // Estructura para coordenadas de IMU
 struct lecturaSensoresStruct {
@@ -46,7 +41,6 @@ struct lecturaSensoresStruct {
     float temperatura;
     float imux;
     float imuy;
-    float sonido;
 };
 
 void setup() {
@@ -73,10 +67,10 @@ void setup() {
   cola = xQueueCreate(1, sizeof(struct lecturaSensoresStruct)); // Cada elemento en la cola será un string de 50 caracteres
 
   // Creacion de tareas que se ejecutaran de manera independiente
-  xTaskCreate(recibirPorPuertoSerie, (const portCHAR *) "recibirPorPuertoSerie", 400, NULL, 3, NULL); // TODO: si las prioridades de las tareas de lectura y activacion son menores que esta, esta funciona, si no no
+  xTaskCreate(recibirPorPuertoSerie, (const portCHAR *) "recibirPorPuertoSerie", 500, NULL, 3, NULL); // TODO: si las prioridades de las tareas de lectura y activacion son menores que esta, esta funciona, si no no
   xTaskCreate(leerSensores, (const portCHAR *) "leerSensores", 400, NULL, 2, NULL);
-  xTaskCreate(activarActuador, (const portCHAR *) "activarActuador", 200, NULL, 2, NULL);
-  xTaskCreate(enviarPorPuertoSerie, (const portCHAR *) "enviarPorPuertoSerie", 700, NULL, 1, NULL);
+  xTaskCreate(activarActuador, (const portCHAR *) "activarActuador", 400, NULL, 2, NULL);
+  xTaskCreate(enviarPorPuertoSerie, (const portCHAR *) "enviarPorPuertoSerie", 400, NULL, 1, NULL);
 }
 
 void loop() {}
@@ -90,18 +84,17 @@ char generarChecksum(struct lecturaSensoresStruct lecturaSensores){
   res += lecturaSensores.temperatura;
   res += lecturaSensores.imux;
   res += lecturaSensores.imuy;
-  res += lecturaSensores.sonido;
-  Serial.print("Getting the checkSum: ");
+  Serial.print(F("Getting the checkSum: "));
   Serial.println(res);
   char checksumCA[tamLecturaSensor];
   dtostrf(res, 4, 3, checksumCA); // Se convierte lo obtenido en un char array
-  char resByte; 
-  for (int i = 0; i < tamLecturaSensor ; i++){
+  char resByte;
+  for (uint8_t i = 0; i < tamLecturaSensor ; i++){
     if (checksumCA[i] == '.'){ // Se toma el ultimo caracter a la izquierda del punto (ya que es un float): ese será el checksum
       resByte = checksumCA[i-1];
     }
   }
-  Serial.print("CheckSum: ");
+  Serial.print(F("CheckSum: "));
   Serial.println(resByte);
   return resByte;
 }
@@ -114,7 +107,6 @@ struct lecturaSensoresStruct consultarSensores(){
   lecturaSensores.temperatura = 23.4; // Temperatura
   lecturaSensores.imux = 2;
   lecturaSensores.imuy = 3;
-  lecturaSensores.sonido = 100.2;
 
   return lecturaSensores;
 }
@@ -149,86 +141,22 @@ char * structToCharArray(struct lecturaSensoresStruct lecturaSensores, char* lec
   strcat(lecturaAsArray, imuyCA);
   strcat(lecturaAsArray, delimitador);
 
-  char sonidoCA[tamLecturaSensor];
-  dtostrf(lecturaSensores.sonido, 4, 3, sonidoCA);
-  strcat(lecturaAsArray, sonidoCA);
-  strcat(lecturaAsArray, delimitador);
-
   char checksum[2];
-  strcat(lecturaAsArray, generarChecksum(lecturaSensores)); // TODO: el checksum obtenido es correcto, pero no se aniade bien 
+  strcat(lecturaAsArray, generarChecksum(lecturaSensores)); // TODO: el checksum obtenido es correcto, pero no se aniade bien
   strcat(lecturaAsArray, "]");
 
-}
-
-char * structToCharArray_og(struct lecturaSensoresStruct lecturaSensores, char* lecturaAsArray){
-
-  lecturaAsArray[0] = '[';
-  lecturaAsArray[1] = 'O';
-
-  char ldrCA[tamLecturaSensor];
-  ((String)lecturaSensores.ldr).toCharArray(ldrCA, tamLecturaSensor);
-  strcat(lecturaAsArray, ldrCA);
-  strcat(lecturaAsArray, delimitador);
-
-  char humedadCA[tamLecturaSensor];
-  ((String)lecturaSensores.humedad).toCharArray(humedadCA, tamLecturaSensor);
-  strcat(lecturaAsArray, humedadCA);
-  strcat(lecturaAsArray, delimitador);
-
-  char temperaturaCA[tamLecturaSensor];
-  ((String)lecturaSensores.temperatura).toCharArray(temperaturaCA, tamLecturaSensor);
-  strcat(lecturaAsArray, temperaturaCA);
-  strcat(lecturaAsArray, delimitador);
-
-  char imuxCA[tamLecturaSensor];
-  ((String)lecturaSensores.imux).toCharArray(imuxCA, tamLecturaSensor);
-  strcat(lecturaAsArray, imuxCA);
-  strcat(lecturaAsArray, delimitador);
-
-  char imuyCA[tamLecturaSensor];
-  ((String)lecturaSensores.imuy).toCharArray(imuyCA, tamLecturaSensor);
-  strcat(lecturaAsArray, imuyCA);
-  strcat(lecturaAsArray, delimitador);
-
-  char sonidoCA[tamLecturaSensor];
-  ((String)lecturaSensores.sonido).toCharArray(sonidoCA, tamLecturaSensor);
-  strcat(lecturaAsArray, sonidoCA);
-  strcat(lecturaAsArray, delimitador);
-
-  char checksum[2];
-  checksum[0] = (char)generarChecksum(lecturaSensores);
-  strcat(lecturaAsArray, checksum);
-  strcat(lecturaAsArray, "]");
-
-}
-
-void printDirecto(struct lecturaSensoresStruct lecturaSensores){
-  Serial.print('[');
-  Serial.print('O');
-  Serial.print(lecturaSensores.ldr);
-  Serial.print('/');
-  Serial.print(lecturaSensores.humedad);
-  Serial.print('/');
-  Serial.print(lecturaSensores.temperatura);
-  Serial.print('/');
-  Serial.print(lecturaSensores.imux);
-  Serial.print('/');
-  Serial.print(lecturaSensores.imuy);
-  Serial.print('/');
-  Serial.print(lecturaSensores.sonido);
-  Serial.print('/');
-  Serial.print(generarChecksum(lecturaSensores));
-  Serial.print(']');
 }
 
 bool checkSemaforos(bool retakeSAA, bool retakeSLS){
-  Serial.println("At checkSemaforos");
+  Serial.println(F("At checkSemaforos"));
   Serial.println(retakeSAA);
   Serial.println(retakeSLS);
   bool res = false;
+  /*
   if (retakeSAA == false && retakeSLS == false){
     return true;
   }
+  */
   if (retakeSAA == true){
     res = (xSemaphoreTake(semaforoActivacionActuador, 500) == pdTRUE);
   }
@@ -247,6 +175,24 @@ void BIledToggle(){
   ledState = !ledState;
 }
 
+void printDirecto(struct lecturaSensoresStruct lecturaSensores){
+  Serial.print(F("[")); // Serial.print('[');
+  Serial.print(F("O")); // Serial.print('O');
+  Serial.print(lecturaSensores.ldr);
+  Serial.print(F("/")); // Serial.print('/');
+  Serial.print(lecturaSensores.humedad);
+  Serial.print(F("/")); // Serial.print('/');
+  Serial.print(lecturaSensores.temperatura);
+  Serial.print(F("/")); // Serial.print('/');
+  Serial.print(lecturaSensores.imux);
+  Serial.print(F("/")); // Serial.print('/');
+  Serial.print(lecturaSensores.imuy);
+  Serial.print(F("/")); // Serial.print('/');
+  Serial.print(generarChecksum(lecturaSensores));
+  Serial.print(F("]")); // Serial.print(']');
+  Serial.print(F("\0")); // Serial.print('\0'); // TODO: 0, n, r o una combinacion? segun lo probado en TinkerCad, solo n es el que genera un salto de linea
+}
+
 // ############################ TAREAS ############################
 
 void recibirPorPuertoSerie(void *pvParameters){
@@ -255,17 +201,17 @@ void recibirPorPuertoSerie(void *pvParameters){
   char cmd;
   for (;;){
     if (checkSemaforos(retakeSAA, retakeSLS) == true){
-      Serial.println("------------------------------------------------------------------------");
-      Serial.println("En recibirPorPuertoSerie esperando recibir algo por el puerto serie...");
+      Serial.println(F("------------------------------------------------------------------------"));
+      Serial.println(F("En recibirPorPuertoSerie esperando recibir algo por el puerto serie..."));
       while (Serial.available() <= 0){} // TODO: que pasa si recibo algo que no es 0/1 ? si no pasa nada, ignorar
       cmd = Serial.read();
       if (cmd == '1') {
-        Serial.println("Recibido 1");
+        Serial.println(F("Recibido 1"));
         retakeSAA = true;
         retakeSLS = false;
         xSemaphoreGive(semaforoActivacionActuador);
       } else if (cmd == '0') {
-        Serial.println("Recibido 0");
+        Serial.println(F("Recibido 0"));
         retakeSAA = false;
         retakeSLS = true;
         xSemaphoreGive(semaforoLecturaSensores);
@@ -279,7 +225,7 @@ void activarActuador(void *pvParameters){
   (void) pvParameters;
   for (;;){
     if (xSemaphoreTake(semaforoActivacionActuador, 1000) == pdTRUE){ // espera semaforo
-      Serial.println("En activarActuador");
+      Serial.println(F("En activarActuador"));
       servoMotor.write(servoPos); // Mueve el servo a su posicion maxima
       if (servoPos == 0 ){
         servoPos = 180;
@@ -298,7 +244,7 @@ void leerSensores(void *pvParameters){
   struct lecturaSensoresStruct lectura_sensores;
   for (;;){
     if (xSemaphoreTake(semaforoLecturaSensores, 1000) == pdTRUE){ // espera semaforo
-      Serial.println("En leerSensores");
+      Serial.println(F("En leerSensores"));
       lectura_sensores = consultarSensores(); // consultarSensores devuelve un struct que se debe poner en la cola
       xQueueSend(cola, &lectura_sensores, portMAX_DELAY); // poner lo que devuelve consultarSensores en la cola
       xSemaphoreGive(semaforoLecturaSensores); // devuelve el semaforo
@@ -313,12 +259,14 @@ void enviarPorPuertoSerie(void *pvParameters){
   struct lecturaSensoresStruct lectura_sensores;
   for (;;){
     if (xQueueReceive(cola, &lectura_sensores, 1000) == pdPASS) { // Se espera a obtener un elemento (un struct) de la cola
-      Serial.println("En enviarPorPuertoSerie");
+      Serial.println(F("En enviarPorPuertoSerie"));
       BIledToggle();
+      printDirecto(lectura_sensores);
+      /*
       char lecturaAsArray[55] = {};
       structToCharArray(lectura_sensores,lecturaAsArray); // Se transforma el struct en un char array (trama) que incluye el checksum
-      printDirecto(lectura_sensores);
-      //Serial.println(lecturaAsArray);
+      Serial.println(lecturaAsArray);
+      */
     }
     vTaskDelay(1);  // Delay de 1 tick (15ms) para estabilidad
   }

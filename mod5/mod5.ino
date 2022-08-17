@@ -13,7 +13,6 @@ int dhtPin = 2
 int ldrPin = 0;
 int servoPin = 3;
 int motorPin = 5; // DC Motor (debe ser un pin con PWM)
-int sonidoPin = 1;
 int ledRojoPin = 10;
 int ledVerdePin = 11;
 int ledAzulPin = 12;
@@ -130,9 +129,6 @@ String consultarSensores(){
   struct coordenadas imuMeasurements = getImuMeasurement();
   sensores[3] = imuMeasurements.x; // [0];
   sensores[4] = imuMeasurements.y; // [1];
-
-  // Sonido
-  sensores[5] = analogRead(sonidoPin);
 
   String trama = (String)charInicio + (String)"O";
 

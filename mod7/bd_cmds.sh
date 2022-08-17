@@ -9,6 +9,5 @@ CREATE TABLE sensores(
     temperatura DECIMAL(10,5),
     imux DECIMAL(10,5),
     imuy DECIMAL(10,5),
-    sonido DECIMAL(10,5),
     fecha_y_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

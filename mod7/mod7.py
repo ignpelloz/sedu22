@@ -61,8 +61,8 @@ while(1):
         print(separadas[:-1])
 
         # Se inserta lo obtenido en la BD # TODO: si la query falla se debe salir de la iteracion o al menos no permitir actualizar ThingSpeak (ya que subira un registro que ya se subio)
-        run_query("INSERT INTO sensores (luminosidad,humedad,temperatura,imux,imuy,sonido) \
-                  VALUES ('%s','%s','%s','%s','%s','%s');" % (separadas[0],separadas[1],separadas[2],separadas[3],separadas[4],separadas[5]))
+        run_query("INSERT INTO sensores (luminosidad,humedad,temperatura,imux,imuy) \
+                  VALUES ('%s','%s','%s','%s','%s');" % (separadas[0],separadas[1],separadas[2],separadas[3],separadas[4]))
         open("/tmp/nuevoRegistroEnDB", "w")
 
         # Se coloca el servo en su posicion 180 si se llega al umbral del LDR (si es inferior se coloca en su posicion 0, en el caso de que este en 180)

@@ -1,3 +1,4 @@
+-Arduino Mega 2560 has 8 KB (8192 bytes) of (S)RAM: https://www.arduino.cc/en/Tutorial/Foundations/Memory
 -configTOTAL_HEAP_SIZE is in Bytes
 -xTaskCreate gets the stack size in WORDs (1 Word == 4 Bytes).
 
