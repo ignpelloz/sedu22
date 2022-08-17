@@ -6,7 +6,7 @@
 
 //Constants
 #define DHTTYPE DHT11   // Tengo DHT 11 en lugar de 22
-#define NUMSENSORES 6
+#define NUMSENSORES 5
 
 //Pines
 int dhtPin = 2;

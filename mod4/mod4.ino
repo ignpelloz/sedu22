@@ -101,10 +101,10 @@ void setup() {
   cola = xQueueCreate(1, sizeof(struct lecturaSensoresStruct)); // Cada elemento en la cola será un string de 50 caracteres
 
   // Creacion de tareas que se ejecutaran de manera independiente
-  xTaskCreate(recibirPorPuertoSerie, (const portCHAR *) "recibirPorPuertoSerie", 500, NULL, 3, NULL);
-  xTaskCreate(leerSensores, (const portCHAR *) "leerSensores", 400, NULL, 2, NULL);
-  xTaskCreate(activarActuador, (const portCHAR *) "activarActuador", 400, NULL, 2, NULL);
-  xTaskCreate(enviarPorPuertoSerie, (const portCHAR *) "enviarPorPuertoSerie", 400, NULL, 1, NULL);
+  xTaskCreate(recibirPorPuertoSerie, (const portCHAR *) "recibirPorPuertoSerie", 256, NULL, 3, NULL);
+  xTaskCreate(leerSensores, (const portCHAR *) "leerSensores", 600, NULL, 2, NULL);
+  xTaskCreate(activarActuador, (const portCHAR *) "activarActuador", 128, NULL, 2, NULL);
+  xTaskCreate(enviarPorPuertoSerie, (const portCHAR *) "enviarPorPuertoSerie", 600, NULL, 1, NULL);
 }
 
 void loop() {}
@@ -318,7 +318,7 @@ void leerSensores(void *pvParameters){
       Serial.println(F("En leerSensores"));
       lectura_sensores = consultarSensores(); // consultarSensores devuelve un struct que se debe poner en la cola
       xQueueSend(cola, &lectura_sensores, portMAX_DELAY); // poner lo que devuelve consultarSensores en la cola
-      xSemaphoreGive(semaforoLecturaSensores); // devuelve el semaforo
+      xSemaphoreGive(semaforoLecturaSensores); // devuelve el semaforo TODO: parece que despues de esto, la funcion recibePorPuertoSerie retoma el semaforo!
     }
     vTaskDelay(1);  // Delay de 1 tick (15ms) para estabilidad
   }
