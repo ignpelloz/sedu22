@@ -50,12 +50,12 @@ QueueHandle_t cola;
 // Caracteres especiales de las respuestas (lecturas) / peticiones [S] y [A,..]
 #define charInicio '['
 #define charFin ']'
-#define tamLecturaSensor 7; // Queue to string
+#define tamLecturaSensor 7 // Queue to string
 char delimitador[2] = "/"; // Queue to string
 
 // Usados para testear (led blink y servo toggle)
-uint_8 ledState = 0;
-uint_8 servoPos = 180;
+uint8_t ledState = 0;
+uint8_t servoPos = 180;
 
 // Estructura para coordenadas de IMU
 struct coordenadas {
@@ -171,17 +171,13 @@ char generarChecksum(struct lecturaSensoresStruct lecturaSensores){
 struct lecturaSensoresStruct consultarSensores(){
 
   struct lecturaSensoresStruct lecturaSensores;
-  lecturaSensores.ldr = analogRead(ldrPin);
-  //lecturaSensores.humedad = dht.readHumidity();
-  lecturaSensores.humedad = 32.2;
-  //lecturaSensores.temperatura = dht.readTemperature();
-  lecturaSensores.temperatura = 23.4;
 
-  //struct coordenadas imuMeasurements = getImuMeasurement();
-  //lecturaSensores.imux = imuMeasurements.x;
-  lecturaSensores.imux = 2;
-  //lecturaSensores.imuy = imuMeasurements.y;
-  lecturaSensores.imuy = 3;
+  lecturaSensores.ldr = analogRead(ldrPin);
+  lecturaSensores.humedad = dht.readHumidity();
+  lecturaSensores.temperatura = dht.readTemperature();
+  struct coordenadas imuMeasurements = getImuMeasurement();
+  lecturaSensores.imux = imuMeasurements.x;
+  lecturaSensores.imuy = imuMeasurements.y;
 
   return lecturaSensores;
 }

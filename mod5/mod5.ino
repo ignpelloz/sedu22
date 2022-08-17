@@ -9,13 +9,14 @@
 #define NUMSENSORES 6
 
 //Pines
-int dhtPin = 2
+int dhtPin = 2;
 int ldrPin = 0;
 int servoPin = 3;
-int motorPin = 5; // DC Motor (debe ser un pin con PWM)
 int ledRojoPin = 10;
 int ledVerdePin = 11;
 int ledAzulPin = 12;
+int INA = 5; // Fan  
+int INB = 6; // Fan  
 
 float hum, temp;
 int ldrValue;
@@ -105,9 +106,7 @@ int generarChecksum(float sensores[]){
     res += sensores[i];
   }
   String resString = (String)res; // Se convierte lo obtenido en una cadena
-  Serial.println(resString);
   char resByte = resString[resString.indexOf('.')-1]; // Se toma el ultimo caracter a la izquierda del punto (ya que es un float): ese será el checksum
-  Serial.println(resByte);
   return resByte;
 }
 
@@ -158,7 +157,7 @@ void realizarMovimiento(){
   if (actuadorAAccionar == 0){
     servoMotor.write(movimientoSolicitado*20); // va de 0 a 180
   } else if (actuadorAAccionar == 1){
-    analogWrite(motorPin, movimientoSolicitado*28); // va de 0 a 255
+    analogWrite(INA, movimientoSolicitado*28); // va de 0 a 255
   }
 }
 
@@ -189,7 +188,8 @@ void setup() {
 
   //Actuadores
   servoMotor.attach(servoPin);
-  pinMode(motorPin, OUTPUT);
+  pinMode(INA,OUTPUT); // Fan
+  pinMode(INB,OUTPUT); // Fan
 }
 
 void loop_ej2 () {
