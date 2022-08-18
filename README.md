@@ -35,3 +35,12 @@
 - El DHT11 y la IMU no necesitan resistencia, por tanto se conectan muy facilmente, hacerlo ya para el mod 4:
   - https://lastminuteengineers.com/dht11-module-arduino-tutorial/#:~:text=ground%20of%20Arduino.-,Wiring%20DHT11%20Module%20to%20Arduino,-Let%E2%80%99s%20hook%20the
   - https://forum.arduino.cc/t/having-trouble-using-imu-sensor-icm-20689-with-arduino-i2c/692145/10 (viendo los videos que entregue el anio pasado, conecte mi IMU con solo 4 cables, todos a 4 pines adyacentes en un extremo: VCC (5v), GND, SCL y SDA. Estos dos ultimos van conectados a los pines SCL y SDA del arduino, en la parte de pines de "communication")
+
+
+- Algo que puedo probar con semaforos binarios:
+  - RPS no usa semaforos, se ejecuta todo el tiempo. Si recibe un 0 usa xSemaphoreGiveFromISR(semaforoLecturaSensores) y si recibe un 1 usa xSemaphoreGiveFromISR(semaforoActivacionActuador)
+  - Las funciones LS y AA esperan sus respectivos semaforos (usando xSemaphoreTake). Tras obtenerlo, hacen su cometido y listo, no liberan semaforo (ya que no es mutex, es binario y lo maneja el ISR)
+  - La funcion EPS no usa semaforo, simplemente espera algo en la cola
+  - En cuanto a las prioridades
+    - Entiendo que deben ser 0,1,1,1 (respectivamente RPS, LS, AA, EPS). RPS tiene una prioridad menor ya que no se bloquea pues no espera a semaforos o colas.
+    - No obstante, puede ser que esperar a caracteres en el puerto serie se considere un bloqueo, entonces deberia cambiar las prioridades a 2,1,1,1
