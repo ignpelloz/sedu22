@@ -3,6 +3,8 @@
 //  A) La tarea 3 esta esperando el semaforo por tanto, cuando tarea2 termine, dado que tarea3 tiene mas prioridad que tarea1, tomara el semaforo y se ejecutara.
 //  B) A pesar de que tarea3 tiene mayor priodad que tarea1, esta no se ha ejecutado aun. Por tanto, y dado que ya hay un elemento en la cola que puso tarea2, se va a ejecutar, vaciando la cola y mostrando el elemento por pantalla. Se logra asi un ciclo completo: cada tarea se ejecuta una vez.
 
+// Observacion: funciona como describi en la opcion B, es decir: 3,2,1,3,2,1,3,2,1,etc... SOLO si se elimina el vTaskDelay de las tareas LS y EPS y se mantiene en la de prioridad maxima RPS
+
 #include <Arduino_FreeRTOS.h>
 #include <semphr.h>
 #include <queue.h>

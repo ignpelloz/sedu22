@@ -153,8 +153,6 @@ char generarChecksum(struct lecturaSensoresStruct lecturaSensores){
   res += lecturaSensores.temperatura;
   res += lecturaSensores.imux;
   res += lecturaSensores.imuy;
-  Serial.print(F("Getting the checkSum: "));
-  Serial.println(res);
   char checksumCA[tamLecturaSensor];
   dtostrf(res, 4, 3, checksumCA); // Se convierte lo obtenido en un char array
   char resByte;
@@ -163,8 +161,6 @@ char generarChecksum(struct lecturaSensoresStruct lecturaSensores){
       resByte = checksumCA[i-1];
     }
   }
-  Serial.print(F("CheckSum: "));
-  Serial.println(resByte);
   return resByte;
 }
 
