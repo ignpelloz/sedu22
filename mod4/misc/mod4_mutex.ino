@@ -92,8 +92,8 @@ void setup() {
   //Actuadores
   servoMotor.attach(servoPin);
 
-  semaforoLecturaSensores = xSemaphoreCreateBinary();  // Mutex semaforo para permitir la lectura de los sensores
-  semaforoActivacionActuador = xSemaphoreCreateBinary();  // Mutex semaforo para permitir la activacion del actuador
+  semaforoLecturaSensores = xSemaphoreCreateMutex();  // Mutex semaforo para permitir la lectura de los sensores
+  semaforoActivacionActuador = xSemaphoreCreateMutex();  // Mutex semaforo para permitir la activacion del actuador
   xSemaphoreGive(semaforoLecturaSensores);  // Liberar semaforo lectura sensores
   xSemaphoreGive(semaforoActivacionActuador);  // Liberar semaforo activacion del actuador
 
@@ -101,9 +101,9 @@ void setup() {
   cola = xQueueCreate(1, sizeof(struct lecturaSensoresStruct)); // Cada elemento en la cola será un string de 50 caracteres
 
   // Creacion de tareas que se ejecutaran de manera independiente
-  xTaskCreate(recibirPorPuertoSerie, (const portCHAR *) "recibirPorPuertoSerie", 256, NULL, 0, NULL); // Esta es la tarea por defecto. Ademas, las otras estan bloqueadas (semaforo o cola).
-  xTaskCreate(leerSensores, (const portCHAR *) "leerSensores", 600, NULL, 1, NULL);
-  xTaskCreate(activarActuador, (const portCHAR *) "activarActuador", 128, NULL, 1, NULL);
+  xTaskCreate(recibirPorPuertoSerie, (const portCHAR *) "recibirPorPuertoSerie", 256, NULL, 3, NULL);
+  xTaskCreate(leerSensores, (const portCHAR *) "leerSensores", 600, NULL, 2, NULL);
+  xTaskCreate(activarActuador, (const portCHAR *) "activarActuador", 128, NULL, 2, NULL);
   xTaskCreate(enviarPorPuertoSerie, (const portCHAR *) "enviarPorPuertoSerie", 600, NULL, 1, NULL);
 }
 
@@ -153,6 +153,8 @@ char generarChecksum(struct lecturaSensoresStruct lecturaSensores){
   res += lecturaSensores.temperatura;
   res += lecturaSensores.imux;
   res += lecturaSensores.imuy;
+  Serial.print(F("Getting the checkSum: "));
+  Serial.println(res);
   char checksumCA[tamLecturaSensor];
   dtostrf(res, 4, 3, checksumCA); // Se convierte lo obtenido en un char array
   char resByte;
@@ -161,6 +163,8 @@ char generarChecksum(struct lecturaSensoresStruct lecturaSensores){
       resByte = checksumCA[i-1];
     }
   }
+  Serial.print(F("CheckSum: "));
+  Serial.println(resByte);
   return resByte;
 }
 
@@ -265,25 +269,24 @@ void printDirecto(struct lecturaSensoresStruct lecturaSensores){
 void recibirPorPuertoSerie(void *pvParameters){
   (void) pvParameters;
 
-  BaseType_t xHigherPriorityTaskWoken_sAA = pdFALSE;
-  BaseType_t xHigherPriorityTaskWoken_sLS = pdFALSE;
-
   char cmd;
   for (;;){
-    Serial.println(F("------------------------------------------------------------------------"));
-    Serial.println(F("En recibirPorPuertoSerie esperando recibir algo por el puerto serie..."));
-    while (Serial.available() <= 0){} // TODO: que pasa si recibo algo que no es 0/1 ? si no pasa nada, ignorar
-    cmd = Serial.read();
-    if (cmd == '1') {
-      Serial.println(F("Recibido 1"));
-      retakeSAA = true;
-      retakeSLS = false;
-      xSemaphoreGiveFromISR(semaforoActivacionActuador, &xHigherPriorityTaskWoken_sAA);
-    } else if (cmd == '0') {
-      Serial.println(F("Recibido 0"));
-      retakeSAA = false;
-      retakeSLS = true;
-      xSemaphoreGiveFromISR(semaforoLecturaSensores, &xHigherPriorityTaskWoken_sLS);
+    if (checkSemaforos(retakeSAA, retakeSLS) == true){
+      Serial.println(F("------------------------------------------------------------------------"));
+      Serial.println(F("En recibirPorPuertoSerie esperando recibir algo por el puerto serie..."));
+      while (Serial.available() <= 0){} // TODO: que pasa si recibo algo que no es 0/1 ? si no pasa nada, ignorar
+      cmd = Serial.read();
+      if (cmd == '1') {
+        Serial.println(F("Recibido 1"));
+        retakeSAA = true;
+        retakeSLS = false;
+        xSemaphoreGive(semaforoActivacionActuador);
+      } else if (cmd == '0') {
+        Serial.println(F("Recibido 0"));
+        retakeSAA = false;
+        retakeSLS = true;
+        xSemaphoreGive(semaforoLecturaSensores);
+      }
     }
     vTaskDelay(1); // Delay de 1 tick (15ms) para estabilidad (TODO: sin este delay aqui, esta tarea toma el semaforo de nuevo antes que activarActuador
   }
@@ -300,6 +303,7 @@ void activarActuador(void *pvParameters){
       } else {
         servoPos = 0;
       }
+      xSemaphoreGive(semaforoActivacionActuador); // devuelve el semaforo
     }
     vTaskDelay(1);  // Delay de 1 tick (15ms) para estabilidad
   }
@@ -314,6 +318,7 @@ void leerSensores(void *pvParameters){
       Serial.println(F("En leerSensores"));
       lectura_sensores = consultarSensores(); // consultarSensores devuelve un struct que se debe poner en la cola
       xQueueSend(cola, &lectura_sensores, portMAX_DELAY); // poner lo que devuelve consultarSensores en la cola
+      xSemaphoreGive(semaforoLecturaSensores); // devuelve el semaforo TODO: parece que despues de esto, la funcion recibePorPuertoSerie retoma el semaforo!
     }
     vTaskDelay(1);  // Delay de 1 tick (15ms) para estabilidad
   }
