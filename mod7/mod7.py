@@ -21,7 +21,7 @@ caracterDelimitador = "/"
 latenciaEntreLecturas = 5
 umbralLDR = 100 # cubierto vale menos de 10, abierto vale ~340
 umbralTemperatura = 40
-puerto = "/dev/ttyACM0" # Para conocer el puerto, ejecutar: ls /dev/tty* antes y despues de conectar el arduino al pc. El dispositivo que falte en el primer ls es nuestro puerto
+puerto = "/dev/ttyACM1" # Para conocer el puerto, ejecutar: ls /dev/tty* antes y despues de conectar el arduino al pc. El dispositivo que falte en el primer ls es nuestro puerto
 motorActivado = False
 servoActivado = False
 
