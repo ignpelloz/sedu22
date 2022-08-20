@@ -21,9 +21,6 @@
 // Maquina de estado
 int estado = 1;
 char charRecibido;
-char charInicio = '[';
-char charFin = ']';
-//char delimitador = '/';
 int posblesActuadores[] = {0,1};
 int actuadorAAccionar;
 int numeroDeActuadores = 2;
@@ -67,14 +64,7 @@ SemaphoreHandle_t semaforoActivacionActuador;  // Mutex semaforo para permitir l
 QueueHandle_t cola;
 
 // Caracteres especiales de las respuestas (lecturas) / peticiones [S] y [A,..]
-#define charInicio '['
-#define charFin ']'
-#define tamLecturaSensor 7 // Queue to string
-char delimitador[2] = "/"; // Queue to string
-
-// Usados para testear (led blink y servo toggle)
-uint8_t ledState = 0;
-uint8_t servoPos = 180;
+#define tamLecturaSensor 7
 
 // Estructura para coordenadas de IMU
 struct coordenadas {
@@ -222,42 +212,6 @@ struct lecturaSensoresStruct consultarSensores(){
   return lecturaSensores;
 }
 
-char * structToCharArray(struct lecturaSensoresStruct lecturaSensores, char* lecturaAsArray){
-
-  lecturaAsArray[0] = '[';
-  lecturaAsArray[1] = 'O';
-
-  char ldrCA[tamLecturaSensor];
-  dtostrf(lecturaSensores.ldr, 4, 3, ldrCA);
-  strcat(lecturaAsArray, ldrCA);
-  strcat(lecturaAsArray, delimitador);
-
-  char humedadCA[tamLecturaSensor];
-  dtostrf(lecturaSensores.humedad, 4, 3, humedadCA);
-  strcat(lecturaAsArray, humedadCA);
-  strcat(lecturaAsArray, delimitador);
-
-  char temperaturaCA[tamLecturaSensor];
-  dtostrf(lecturaSensores.temperatura, 4, 3, temperaturaCA);
-  strcat(lecturaAsArray, temperaturaCA);
-  strcat(lecturaAsArray, delimitador);
-
-  char imuxCA[tamLecturaSensor];
-  dtostrf(lecturaSensores.imux, 4, 3, imuxCA);
-  strcat(lecturaAsArray, imuxCA);
-  strcat(lecturaAsArray, delimitador);
-
-  char imuyCA[tamLecturaSensor];
-  dtostrf(lecturaSensores.imuy, 4, 3, imuyCA);
-  strcat(lecturaAsArray, imuyCA);
-  strcat(lecturaAsArray, delimitador);
-
-  char checksum[2];
-  strcat(lecturaAsArray, generarChecksum(lecturaSensores)); // TODO: works fine but fails to add the checksum correctly
-  strcat(lecturaAsArray, "]");
-
-}
-
 void printDirecto(struct lecturaSensoresStruct lecturaSensores){
   Serial.print(F("[")); // Serial.print('[');
   Serial.print(F("O")); // Serial.print('O');
@@ -307,7 +261,6 @@ void recibirPorPuertoSerie(void *pvParameters){
       }case 3: {
         if (charRecibido == ']'){
           ledBlink(ledVerdePin);
-          //Serial.println(consultarSensores());
           xSemaphoreGiveFromISR(semaforoLecturaSensores, &xHigherPriorityTaskWoken_sLS);
           estado = 1;
         }else if(charRecibido == ','){
@@ -394,11 +347,6 @@ void enviarPorPuertoSerie(void *pvParameters){
     if (xQueueReceive(cola, &lectura_sensores, 1000) == pdPASS) { // Se espera a obtener un elemento (un struct) de la cola
       //Serial.println(F("En enviarPorPuertoSerie"));
       printDirecto(lectura_sensores);
-      /*
-      char lecturaAsArray[55] = {};
-      structToCharArray(lectura_sensores,lecturaAsArray); // Se transforma el struct en un char array (trama) que incluye el checksum // TODO: works fine but fails to add the checksum correctly
-      Serial.println(lecturaAsArray);
-      */
     }
     vTaskDelay(1);  // Delay de 1 tick (15ms) para estabilidad
   }
