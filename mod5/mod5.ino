@@ -287,8 +287,8 @@ void recibirPorPuertoSerie(void *pvParameters){
 
   char cmd;
   for (;;){
-    Serial.println(F("------------------------------------------------------------------------"));
-    Serial.println(F("En recibirPorPuertoSerie esperando recibir algo por el puerto serie..."));
+    //Serial.println(F("------------------------------------------------------------------------"));
+    //Serial.println(F("En recibirPorPuertoSerie esperando recibir algo por el puerto serie..."));
     while (Serial.available() <= 0){} // Espera a recibir algo por el puerto serie
     charRecibido = Serial.read();
     switch (estado) {
@@ -360,7 +360,7 @@ void activarActuador(void *pvParameters){
   (void) pvParameters;
   for (;;){
     if (xSemaphoreTake(semaforoActivacionActuador, 1000) == pdTRUE){ // espera semaforo
-      Serial.println(F("En activarActuador"));
+      //Serial.println(F("En activarActuador"));
       /* Activa el actuador actuadorAAccionar en el nivel que indica movimientoSolicitado */
       if (actuadorAAccionar == 0){
         servoMotor.write(movimientoSolicitado*20); // va de 0 a 180
@@ -378,7 +378,7 @@ void leerSensores(void *pvParameters){
   struct lecturaSensoresStruct lectura_sensores;
   for (;;){
     if (xSemaphoreTake(semaforoLecturaSensores, 1000) == pdTRUE){ // espera semaforo
-      Serial.println(F("En leerSensores"));
+      //Serial.println(F("En leerSensores"));
       lectura_sensores = consultarSensores(); // consultarSensores devuelve un struct que se debe poner en la cola
       xQueueSend(cola, &lectura_sensores, portMAX_DELAY); // poner lo que devuelve consultarSensores en la cola
     }
@@ -392,7 +392,7 @@ void enviarPorPuertoSerie(void *pvParameters){
   struct lecturaSensoresStruct lectura_sensores;
   for (;;){
     if (xQueueReceive(cola, &lectura_sensores, 1000) == pdPASS) { // Se espera a obtener un elemento (un struct) de la cola
-      Serial.println(F("En enviarPorPuertoSerie"));
+      //Serial.println(F("En enviarPorPuertoSerie"));
       printDirecto(lectura_sensores);
       /*
       char lecturaAsArray[55] = {};
