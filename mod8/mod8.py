@@ -10,9 +10,9 @@ API_KEY = "151QABP1286D3OQT"
 CLEAR_API_KEY = "QGCZVKW1TTJ8M0US"
 
 # Datos de la BD
-DB_HOST = "127.0.0.1" # localhost"
+DB_HOST = "localhost" # Para Docker: 127.0.0.1
 DB_USER = "root"
-DB_PASS = "pi"
+DB_PASS = "root"
 DB_NAME = "SEDU22"
 
 # Tiempo que pasará entre checkeos de la BD (y por consiguiente escrituras)
@@ -47,7 +47,6 @@ while(1):
                       "field3": float(nuevaEntrada[3]),
                       "field4": float(nuevaEntrada[4]),
                       "field5": float(nuevaEntrada[5]),
-                      "field6": float(nuevaEntrada[6]),
                       "created_at": nuevaEntrada[7]}, default=str), # TODO: la fecha debe ser unica, no puede existir ya. Ademas, no debe haber 0s a la izq (por ejemplo, nu usar 02, 03, etc). Tambien, comprobar porque no respeta la fecha utilizada. UPDATE: parece que no tengo que hacer nada especial con la fecha, comprobar!
               headers = {'Content-Type': 'application/json'})
 

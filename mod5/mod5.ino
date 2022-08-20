@@ -5,10 +5,9 @@
 #include <Wire.h>
 #include <Servo.h>
 
-//Constants
+// Constants
 #define DHTTYPE DHT11   // Tengo DHT 11 en lugar de 22
 
-//Pines
 // Pines
 #define ldrPin 0 // analogico (was int)
 #define servoPin 3 // digital (was int)
@@ -275,6 +274,7 @@ void printDirecto(struct lecturaSensoresStruct lecturaSensores){
   Serial.print(generarChecksum(lecturaSensores));
   Serial.print(F("]")); // Serial.print(']');
   Serial.print(F("\0")); // Serial.print('\0'); // TODO: 0, n, r o una combinacion? segun lo probado en TinkerCad, solo n es el que genera un salto de linea
+  Serial.print(F("\n"));
 }
 
 // ############################ TAREAS ############################
