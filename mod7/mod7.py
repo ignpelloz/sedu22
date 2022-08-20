@@ -5,7 +5,7 @@ import MySQLdb # sudo apt-get install python3-dev libmysqlclient-dev && sudo pip
 # Acceder a la BD. Nota: antes de esto, se debe instalar y configurar la base de datos
 DB_HOST = "localhost"
 DB_USER = "root"
-DB_PASS = "pi"
+DB_PASS = "root"
 DB_NAME = "SEDU22"
 
 def run_query(query=""):
