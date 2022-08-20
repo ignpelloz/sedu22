@@ -6,7 +6,7 @@ After=multi-user.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python /home/pi/mod7.py
+ExecStart=/usr/bin/python /home/pi/sedu22/mod7/mod7.py
 Restart=on-abort
 
 [Install]
@@ -15,7 +15,7 @@ EOT
 
 # Dar permisos de ejecucion
 sudo chmod 644 /lib/systemd/system/mod7.service
-chmod +x /home/pi/mod7.py
+chmod +x /home/pi/sedu22/mod7/mod7.py
 
 # Recargar daemon
 sudo systemctl daemon-reload

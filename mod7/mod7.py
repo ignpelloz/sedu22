@@ -66,18 +66,18 @@ while(1):
         open("/tmp/nuevoRegistroEnDB", "w")
 
         # Se coloca el servo en su posicion 180 si se llega al umbral del LDR (si es inferior se coloca en su posicion 0, en el caso de que este en 180)
-        if separadas[0] >= umbralLDR and servoActivado is False:
+        if float(separadas[0]) >= umbralLDR and servoActivado is False:
             micro.write(b"[A,0,9]")
             servoActivado = True
-        elif separadas[0] < umbralLDR and servoActivado is True:
+        elif float(separadas[0]) < umbralLDR and servoActivado is True:
             micro.write(b"[A,0,0]")
             servoActivado = False
 
         # Se activa el motor si se llega al umbral del sensor de temperatura (si es inferior se apaga, en el caso de que este activado)
-        if separadas[2] >= umbralTemperatura and motorActivado is False:
+        if float(separadas[2]) >= umbralTemperatura and motorActivado is False:
             micro.write(b"[A,1,9]")
             motorActivado = True
-        elif separadas[2] < umbralTemperatura and motorActivado is True:
+        elif float(separadas[2]) < umbralTemperatura and motorActivado is True:
             micro.write(b"[A,1,0]")
             motorActivado = False
 
