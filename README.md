@@ -44,3 +44,17 @@
   - En cuanto a las prioridades
     - Entiendo que deben ser 0,1,1,1 (respectivamente RPS, LS, AA, EPS). RPS tiene una prioridad menor ya que no se bloquea pues no espera a semaforos o colas.
     - No obstante, puede ser que esperar a caracteres en el puerto serie se considere un bloqueo, entonces deberia cambiar las prioridades a 2,1,1,1
+
+
+- Los servicios python creados no producen logs, cual es el problem? no se deberian mostrar (al usar journalctl) los prints() ?
+
+
+- El servicio del mod8 escribia una de cada 3 peticiones, incluso si las dos no escritas tienen created_at que NO estan en la bd. Despues, al intentar aniadir las 5 ultimas de golpe, se aprecia algo similar: se aniaden 1 row de cada tres, por ejemplo (ver logs): 757, 760, 763...
+  Puede ser el problema la fecha? Intentar transformar el Python datetime a string de la forma
+  - "2014-02-25T14:13:01-05:00"
+  - "2018-04-23 21:36:20 +0200"
+  - "2018-01-30 10:26:2 -0500"
+  - "2018-06-14T12:12:22-0500"
+  - "2018-01-30T10:26:23-0500"
+  - "2014-12-31 23:59:59"
+  He probado eso y no ayuda. Parece que el problema es la frecuencia: si aumeno de 5s a 10s, entonces parece que aniade rows contiguas a veces o con una por medio... ? notese que para bulk write por ejemplo, hay una limitacion de una peticion cada 15 segundos https://www.mathworks.com/help/thingspeak/bulkwritejsondata.html

@@ -90,19 +90,19 @@ void setup() {
   servoMotor.attach(servoPin);
 
   // Semaforo (binario) para permitir la lectura de los sensores
-  semaforoLecturaSensores = xSemaphoreCreateBinary();  
-  
+  semaforoLecturaSensores = xSemaphoreCreateBinary();
+
   // Semaforo (binario) para permitir la activacion del actuador
-  semaforoActivacionActuador = xSemaphoreCreateBinary(); 
+  semaforoActivacionActuador = xSemaphoreCreateBinary();
 
   // Cola
   cola = xQueueCreate(1, sizeof(struct lecturaSensoresStruct)); // Cada elemento en la cola será un string de 50 caracteres
 
   // Creacion de tareas que se ejecutaran de manera independiente
   xTaskCreate(recibirPorPuertoSerie, (const portCHAR *) "recibirPorPuertoSerie", 256, NULL, 0, NULL); // Esta es la tarea por defecto. Ademas, las otras estan bloqueadas (semaforo o cola).
-  xTaskCreate(leerSensores, (const portCHAR *) "leerSensores", 600, NULL, 1, NULL);
-  xTaskCreate(activarActuador, (const portCHAR *) "activarActuador", 128, NULL, 1, NULL);
-  xTaskCreate(enviarPorPuertoSerie, (const portCHAR *) "enviarPorPuertoSerie", 600, NULL, 1, NULL);
+  xTaskCreate(leerSensores, (const portCHAR *) "leerSensores", 512, NULL, 1, NULL);
+  xTaskCreate(activarActuador, (const portCHAR *) "activarActuador", 256, NULL, 1, NULL);
+  xTaskCreate(enviarPorPuertoSerie, (const portCHAR *) "enviarPorPuertoSerie", 512, NULL, 1, NULL);
 }
 
 void loop() {}

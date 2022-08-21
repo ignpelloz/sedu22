@@ -6,7 +6,7 @@ After=multi-user.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python /home/pi/sedu22/mod7/mod7.py
+ExecStart=/usr/bin/python -u /home/pi/sedu22/mod7/mod7.py
 Restart=on-abort
 
 [Install]
