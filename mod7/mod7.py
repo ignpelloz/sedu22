@@ -73,11 +73,17 @@ def fanControl(temperatura):
         micro.write(b"[A,1,9]")
         fanActivadoSet("umbralO6")
 
+def getPuerto():
+    """ Devuelve la ruta del dispositivo, por ejemplo ttyACM0. """
+    for dispositivo in os.listdir("/dev"):
+        if "ACM" in dispositivo:
+            return dispositivo
+
 caracterDelimitador = "/"
 latenciaEntreLecturas = 5
 umbralLDR = 100 # cubierto vale menos de 10, abierto vale ~340
 umbralesTemp = [20,21,22,23,24,25,26]
-puerto = "/dev/ttyACM1" # Para conocer el puerto, ejecutar: ls /dev/tty* antes y despues de conectar el arduino al pc. El dispositivo que falte en el primer ls es nuestro puerto
+puerto = "/dev/%s" % getPuerto()
 servoActivado = False
 fanActivado = {"umbralU0":False,
                "umbral01":False,
