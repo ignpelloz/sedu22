@@ -252,8 +252,10 @@ void recibirPorPuertoSerie(void *pvParameters){
         }
         break;
       }case 2: {
-        if (charRecibido == 'S' || charRecibido == 'A'){
+        if (charRecibido == 'S'){
           estado = 3;
+        }else if (charRecibido == 'A'){
+          estado = 4;
         }else{
           estadoError();
         }
@@ -263,36 +265,41 @@ void recibirPorPuertoSerie(void *pvParameters){
           ledBlink(ledVerdePin);
           xSemaphoreGiveFromISR(semaforoLecturaSensores, &xHigherPriorityTaskWoken_sLS);
           estado = 1;
-        }else if(charRecibido == ','){
-          estado = 4;
         }else{
           estadoError();
         }
         break;
-      }case 4: {
-        if (arrayContieneElemento(posblesActuadores, numeroDeActuadores, (charRecibido-'0'))){
+      }case 4:{
+        if (charRecibido == ','){
           estado = 5;
-          actuadorAAccionar = (charRecibido-'0');
         }else{
           estadoError();
         }
         break;
       }case 5: {
-        if (charRecibido == ','){
+        if (arrayContieneElemento(posblesActuadores, numeroDeActuadores, (charRecibido-'0'))){
           estado = 6;
+          actuadorAAccionar = (charRecibido-'0');
         }else{
           estadoError();
         }
         break;
       }case 6: {
-        if (arrayContieneElemento(posiblesMovimientos, numeroDeMovimientos, (charRecibido-'0'))){
+        if (charRecibido == ','){
           estado = 7;
-          movimientoSolicitado = (charRecibido-'0');
         }else{
           estadoError();
         }
         break;
       }case 7: {
+        if (arrayContieneElemento(posiblesMovimientos, numeroDeMovimientos, (charRecibido-'0'))){
+          estado = 8;
+          movimientoSolicitado = (charRecibido-'0');
+        }else{
+          estadoError();
+        }
+        break;
+      }case 8: {
         if (charRecibido == ']'){
           ledBlink(ledAzulPin);
           xSemaphoreGiveFromISR(semaforoActivacionActuador, &xHigherPriorityTaskWoken_sAA);
