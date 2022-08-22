@@ -1,6 +1,7 @@
 import serial
 import time
 import MySQLdb
+import os
 
 # Datos para conectar con BD
 DB_HOST = "localhost"

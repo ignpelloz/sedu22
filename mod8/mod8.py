@@ -48,7 +48,7 @@ while(1):
                    "field3": float(nuevaEntrada[3]),
                    "field4": float(nuevaEntrada[4]),
                    "field5": float(nuevaEntrada[5]),
-                   "created_at": str(nuevaEntrada[6])}
+                   "created_at": str(nuevaEntrada[6]) + " +0200"}
         updates.append(newObject)
 
     resp = requests.post(bulkUpdateURL,
