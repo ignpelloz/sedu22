@@ -1,5 +1,0 @@
--serialPort - 2do, 2:10 (se debe abrir y cerrar al cerrar el formulario/app. Ademas siempre hay que consultar si el puerto seria esta abierto antes de enviar o leer)
-
--En entornos con interfaces graficas, las determinadas funcionalidades se ejecutan en hilos separados: la interfaz grafica esta en un hilo y la comunicacion por puerto serie en otro, de manera que los hilos no permiten comunicaciones entre si, pero se puede permitir con 'checkForIllegalCrosThreadCalls=false;'
-
--
