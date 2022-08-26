@@ -225,7 +225,7 @@ void printDirecto(struct lecturaSensoresStruct lecturaSensores){
   Serial.print(F("/")); // Serial.print('/');
   Serial.print(generarChecksum(lecturaSensores));
   Serial.print(F("]")); // Serial.print(']');
-  Serial.print(F("\0")); // Serial.print('\0'); // TODO: 0, n, r o una combinacion? segun lo probado en TinkerCad, solo n es el que genera un salto de linea
+  Serial.print(F("\0"));
 }
 
 // ############################ TAREAS ############################
@@ -240,7 +240,7 @@ void recibirPorPuertoSerie(void *pvParameters){
   for (;;){
     Serial.println(F("------------------------------------------------------------------------"));
     Serial.println(F("En recibirPorPuertoSerie esperando recibir algo por el puerto serie..."));
-    while (Serial.available() <= 0){} // TODO: que pasa si recibo algo que no es 0/1 ? si no pasa nada, ignorar
+    while (Serial.available() <= 0){}
     cmd = Serial.read();
     if (cmd == '1') {
       Serial.println(F("Recibido 1"));
@@ -253,7 +253,7 @@ void recibirPorPuertoSerie(void *pvParameters){
       retakeSLS = true;
       xSemaphoreGiveFromISR(semaforoLecturaSensores, &xHigherPriorityTaskWoken_sLS);
     }
-    vTaskDelay(1); // Delay de 1 tick (15ms) para estabilidad (TODO: sin este delay aqui, esta tarea toma el semaforo de nuevo antes que activarActuador
+    vTaskDelay(1); // Delay de 1 tick (15ms) para estabilidad (sin este delay aqui, esta tarea toma el semaforo de nuevo antes que activarActuador)
   }
 }
 

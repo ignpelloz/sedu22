@@ -5,8 +5,7 @@ import os
 
 # Datos para conectar con BD
 DB_HOST = "localhost"
-DB_USER = "root"
-DB_PASS = "root"
+DB_USER = DB_PASS = "root"
 DB_NAME = "SEDU22"
 
 def run_query(query=""):
@@ -104,11 +103,11 @@ time.sleep(2)
 while(1):
     # Ejecutar solo si el puerto serie esta abierto
     if(micro.isOpen()):
-        # Mandar comando de lectura de sensores. Nota: en python los puertos series no transmiten strings si no array de bytes TODO: por tanto, en .ino debo usar Serial.print (human-readable ASCII text) o Serial.write (bytes)?
+        # Mandar comando de lectura de sensores. Nota: en python los puertos series no transmiten strings si no array de bytes
         micro.write(b"[S]")
 
         # Lectura de la respuesta del controlador
-        separadas = procesarLectura(micro.readline()) # TODO: para poder usar esto, en .ino debo usar Serial.println o Serial.write ?
+        separadas = procesarLectura(micro.readline())
 
         # Si el checksum es incorrecto, se ignora el resto de la iteracion
         if comprobarChecksum(separadas) is False:
@@ -117,7 +116,7 @@ while(1):
         # Se muestran los datos (a excepcion del checksum)
         print(separadas[:-1])
 
-        # Se inserta lo obtenido en la BD # TODO: si la query falla se debe salir de la iteracion o al menos no permitir actualizar ThingSpeak (ya que subira un registro que ya se subio)
+        # Se inserta lo obtenido en la BD
         run_query("INSERT INTO sensores (luminosidad,humedad,temperatura,imux,imuy) \
                   VALUES ('%s','%s','%s','%s','%s');" % (separadas[0],separadas[1],separadas[2],separadas[3],separadas[4]))
         open("/tmp/nuevoRegistroEnDB", "w")

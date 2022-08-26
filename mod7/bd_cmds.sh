@@ -5,7 +5,7 @@ sudo apt install mariadb-server mariadb-client
 sudo mysql_secure_installation
 
 # Lanzar servicio
-sudo /etc/init.d/mysql opcion_deseada
+sudo /etc/init.d/mysql start
 
 # Docker (despues de hacer esto, exec en el contenedor y seguir los pasos: crear BD, crear tabla, etc)
 sudo docker run -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=SEDU22 --net=host mysql
