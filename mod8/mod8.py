@@ -39,7 +39,7 @@ def eliminarDatos():
 while(1):
     print("--------------------")
     # Se consulta la BD: ultimas 8 filas (las mas nuevas)
-    nuevasEntradas = run_query("SELECT * FROM sensores ORDER BY id DESC LIMIT 8;") # Esto devuelve el id, los 6 sensores y la hora (ultimo registro)
+    nuevasEntradas = run_query("SELECT * FROM sensores ORDER BY id DESC LIMIT 10;") # Esto devuelve el id, los 6 sensores y la hora (ultimo registro)
 
     updates = []
     for nuevaEntrada in nuevasEntradas:
