@@ -6,9 +6,9 @@ import os
 import json
 
 # ThingSpeak
-API_KEY = "VWPF296PD37V9M4P"
+API_KEY = "EH9P4GJU85EWW33E"
 CLEAR_API_KEY = "QGCZVKW1TTJ8M0US"
-channelID = "1838807"
+channelID = "1828914"
 bulkUpdateURL = "https://api.thingspeak.com/channels/%s/bulk_update.json" % channelID
 
 # Datos de la BD
