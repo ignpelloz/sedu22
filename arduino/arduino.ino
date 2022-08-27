@@ -122,9 +122,11 @@ void setup() {
   Wire.endTransmission(true);
 
   //Actuadores
-  servoMotor.attach(servoPin);
-  pinMode(INA,OUTPUT); // Fan
-  pinMode(INB,OUTPUT); // Fan
+  servoMotor.attach(servoPin); // Servo
+  pinMode(INA,OUTPUT); // Ventilador
+  pinMode(INB,OUTPUT); // Ventilador
+  digitalWrite(INB, LOW); // Ventilador
+  digitalWrite(INA, LOW); // Ventilador
 
   // Semaforo (binario) para permitir la lectura de los sensores
   semaforoLecturaSensores = xSemaphoreCreateBinary();
@@ -227,7 +229,7 @@ void printDirecto(struct lecturaSensoresStruct lecturaSensores){
   Serial.print(F("/")); // Serial.print('/');
   Serial.print(generarChecksum(lecturaSensores));
   Serial.print(F("]")); // Serial.print(']');
-  //Serial.print(F("\0")); 
+  //Serial.print(F("\0"));
   Serial.print(F("\r"));
   Serial.print(F("\n")); // salto de linea
 }
