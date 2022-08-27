@@ -82,7 +82,7 @@ def getPuerto():
 caracterDelimitador = "/"
 latenciaEntreLecturas = 5
 umbralLDR = 100 # cubierto vale menos de 10, abierto vale ~340
-umbralesTemp = [20,21,22,23,24,25,26]
+umbralesTemp = [22,23,24,25,26,27,28]
 puerto = "/dev/%s" % getPuerto()
 servoActivado = False
 fanActivado = {"umbralU0":False,
