@@ -38,11 +38,10 @@ DHT dht(dhtPin, DHTTYPE);
 #define G_R 131.0 //Ratios de conversion
 #define RAD_TO_DEG 57.295779 //Radianes a grados 180/PI
 
-//La MPU-6050 da los valores en enteros de 16 bits
-//valores sin refinar
+// IMU - Valores sin refinar (la MPU-6050 da los valores en enteros de 16 bits)
 int16_t AcX, AcY, AcZ, GyX, GyY, GyZ;
 
-//Angulos
+// Angulos
 float Acc[2];
 float Gy[2];
 float Angle[2];
@@ -57,14 +56,11 @@ void leerSensores( void *pvParameters );
 void activarActuador( void *pvParameters );
 
 // Semaforos
-SemaphoreHandle_t semaforoLecturaSensores;  // Mutex semaforo para permitir la lectura de los sensores
-SemaphoreHandle_t semaforoActivacionActuador;  // Mutex semaforo para permitir la activacion del actuador
+SemaphoreHandle_t semaforoLecturaSensores;  // Semaforo para permitir la lectura de los sensores
+SemaphoreHandle_t semaforoActivacionActuador;  // Semaforo para permitir la activacion del actuador
 
-// Cola
+// Cola de mensajes
 QueueHandle_t cola;
-
-// Caracteres especiales de las respuestas (lecturas) / peticiones [S] y [A,..]
-#define tamLecturaSensor 7
 
 // Estructura para coordenadas de IMU
 struct coordenadas {
@@ -72,7 +68,7 @@ struct coordenadas {
     float y;
 };
 
-// Estructura para coordenadas de IMU
+// Estructura para lectura de sensores (poner en cola y leer de esta)
 struct lecturaSensoresStruct {
     float ldr;
     float humedad;
@@ -81,12 +77,18 @@ struct lecturaSensoresStruct {
     float imuy;
 };
 
+/**
+ * Enciende el lod rojo e imprime "[E]".
+ */
 void estadoError(){
   ledBlink(ledRojoPin);
   estado = 1;
   Serial.println("[E]");
 }
 
+/**
+ * Dados un array y un elemento, comprueba si el array contiene al elemento.
+ */
 boolean arrayContieneElemento(int array[], int arrayLen, int elemento) {
   for (int i = 0; i < arrayLen; i++) {
     if (array[i] == elemento) {
@@ -96,6 +98,9 @@ boolean arrayContieneElemento(int array[], int arrayLen, int elemento) {
   return false;
 }
 
+/**
+ * Recibe un pin (entero) al que hay conectado un led e ilumina este durante 400 ms.
+ */
 void ledBlink(int ledPin){
   digitalWrite(ledPin, HIGH);
   delay(400);
@@ -145,10 +150,15 @@ void setup() {
 
 }
 
-void loop() {} // mod5's og loop: https://github.com/ignpelloz/sedu22/blob/main/mod5/mod5_sinEj4.ino#L227
+void loop() {}
 
 // ############################ FUNCIONES AUX ############################
 
+/**
+ * Lee los valores del acelerometro de la IMU y a partir de estos calcula sus angulos con la formula de la tangente.
+ * Lee los valores del giroscopio de la IMU y a partir de estos calcula sus angulos.
+ * Finalmente se aplicaa el Filtro Complenentario utilizando los angulos del acelerometro y del giroscopio.
+ */
 struct coordenadas getImuMeasurement(){
   //Leer los valores del Acelerometro de la IMU
   Wire.beginTransmission(MPU);
@@ -182,6 +192,10 @@ struct coordenadas getImuMeasurement(){
   return coordenadasIMU;
 }
 
+/**
+ * Recibe un struct con los valores de los sensores y genera el checksum:
+ * valor de las unidades del sumatorio de las medidas de los 5 sensores.
+ */
 char generarChecksum(struct lecturaSensoresStruct lecturaSensores){
   float res = 0.0;
   res += lecturaSensores.ldr;
@@ -189,46 +203,50 @@ char generarChecksum(struct lecturaSensoresStruct lecturaSensores){
   res += lecturaSensores.temperatura;
   res += lecturaSensores.imux;
   res += lecturaSensores.imuy;
-  char checksumCA[tamLecturaSensor];
+  char checksumCA[7];
   dtostrf(res, 4, 3, checksumCA); // Se convierte lo obtenido en un char array
   char resByte;
-  for (uint8_t i = 0; i < tamLecturaSensor ; i++){
-    if (checksumCA[i] == '.'){ // Se toma el ultimo caracter a la izquierda del punto (ya que es un float): ese será el checksum
+  for (uint8_t i = 0; i < 7 ; i++){
+    if (checksumCA[i] == '.'){ // Se toma el ultimo caracter (un entero) a la izquierda del punto (ya que es un float): ese será el checksum
       resByte = checksumCA[i-1];
     }
   }
   return resByte;
 }
 
+/**
+ * Toma medidas de los 5 sensores y devuelve los 5 valores (todos float) en un struct.
+ */
 struct lecturaSensoresStruct consultarSensores(){
-
   struct lecturaSensoresStruct lecturaSensores;
-
   lecturaSensores.ldr = analogRead(ldrPin);
   lecturaSensores.humedad = dht.readHumidity();
   lecturaSensores.temperatura = dht.readTemperature();
   struct coordenadas imuMeasurements = getImuMeasurement();
   lecturaSensores.imux = imuMeasurements.x;
   lecturaSensores.imuy = imuMeasurements.y;
-
   return lecturaSensores;
 }
 
+/**
+ * Recibe un struct con 5 float (valores de los sensores), genera el checksum usando generarChecksum y envia por
+ * el puerto serie una trama del tipo: [OVALOR_SENSOR1/VALOR_SENSOR2/VALOR_SENSOR3/VALOR_SENSOR4/VALOR_SENSOR1/CHECKSUM]
+ */
 void printDirecto(struct lecturaSensoresStruct lecturaSensores){
-  Serial.print(F("[")); // Serial.print('[');
-  Serial.print(F("O")); // Serial.print('O');
+  Serial.print(F("["));
+  Serial.print(F("O"));
   Serial.print(lecturaSensores.ldr);
-  Serial.print(F("/")); // Serial.print('/');
+  Serial.print(F("/"));
   Serial.print(lecturaSensores.humedad);
-  Serial.print(F("/")); // Serial.print('/');
+  Serial.print(F("/"));
   Serial.print(lecturaSensores.temperatura);
-  Serial.print(F("/")); // Serial.print('/');
+  Serial.print(F("/"));
   Serial.print(lecturaSensores.imux);
-  Serial.print(F("/")); // Serial.print('/');
+  Serial.print(F("/"));
   Serial.print(lecturaSensores.imuy);
-  Serial.print(F("/")); // Serial.print('/');
+  Serial.print(F("/"));
   Serial.print(generarChecksum(lecturaSensores));
-  Serial.print(F("]")); // Serial.print(']');
+  Serial.print(F("]"));
   //Serial.print(F("\0"));
   Serial.print(F("\r"));
   Serial.print(F("\n")); // salto de linea
@@ -236,6 +254,11 @@ void printDirecto(struct lecturaSensoresStruct lecturaSensores){
 
 // ############################ TAREAS ############################
 
+/**
+ * Recibe tramas por el puerto serie (implementa la maquina de estados):
+ * -Si recibe una trama tipo [S] libera el semáforo semaforoLecturaSensores
+ * -Si recibe una trama tipo [A,N,V] libera el semáforo semaforoActivacionActuador
+ */
 void recibirPorPuertoSerie(void *pvParameters){
   (void) pvParameters;
 
@@ -248,7 +271,7 @@ void recibirPorPuertoSerie(void *pvParameters){
     //Serial.println(F("En recibirPorPuertoSerie esperando recibir algo por el puerto serie..."));
     while (Serial.available() <= 0){} // Espera a recibir algo por el puerto serie
     charRecibido = Serial.read();
-    switch (estado) {
+    switch (estado) { // MAQUINA DE ESTADOS
       case 1: {
         if (charRecibido == '['){
           estado = 2;
@@ -319,6 +342,10 @@ void recibirPorPuertoSerie(void *pvParameters){
   }
 }
 
+/**
+ * Espera al semáforo semaforoActivacionActuador y cuando lo obtiene controla uno de los actuadores
+ * atendiendo a los enteros N (variable actuadorAAccionar) y V (variable movimientoSolicitado) recibidos en la trama.
+ */
 void activarActuador(void *pvParameters){
   (void) pvParameters;
   for (;;){
@@ -335,9 +362,11 @@ void activarActuador(void *pvParameters){
   }
 }
 
+/**
+ * Espera al semáforo semaforoLecturaSensores y cuando lo obtiene lee los sensores e inserta lo obtenido en la cola con un struct.
+ */
 void leerSensores(void *pvParameters){
   (void) pvParameters;
-
   struct lecturaSensoresStruct lectura_sensores;
   for (;;){
     if (xSemaphoreTake(semaforoLecturaSensores, 1000) == pdTRUE){ // espera semaforo
@@ -349,9 +378,11 @@ void leerSensores(void *pvParameters){
   }
 }
 
+/**
+ * Espera a recibir un elemento por la cola. Cuando lo recibe, lo envía por el puerto serie.
+ */
 void enviarPorPuertoSerie(void *pvParameters){
   (void) pvParameters;
-
   struct lecturaSensoresStruct lectura_sensores;
   for (;;){
     if (xQueueReceive(cola, &lectura_sensores, 1000) == pdPASS) { // Se espera a obtener un elemento (un struct) de la cola

@@ -7,11 +7,15 @@ sudo mysql_secure_installation
 # Lanzar servicio
 sudo /etc/init.d/mysql start
 
-# Docker (despues de hacer esto, exec en el contenedor y seguir los pasos: crear BD, crear tabla, etc)
+# ALTERNATIVA: Docker (despues de hacer esto, exec en el contenedor y seguir los pasos: crear BD, crear tabla, etc)
 sudo docker run -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=SEDU22 --net=host mysql
 
-# Para conectarse deberás ejecutar el siguiente comando:
-mysql -u root -p # password is root too
+# Conectarser al servidor utilizando el cliente:
+mysql -u root -p
+
+######################################################
+### A partir de aqui, dentro del shell interactivo:
+######################################################
 
 # Crear una nueva base de datos
 create database SEDU22;

@@ -9,6 +9,7 @@ DB_USER = DB_PASS = "root"
 DB_NAME = "SEDU22"
 
 def run_query(query=""):
+    """Recibe un string que representa una query para SQL y la ejecuta. """
     conn = MySQLdb.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
     cursor = conn.cursor()
     cursor.execute(query)
@@ -18,24 +19,27 @@ def run_query(query=""):
     return
 
 def procesarLectura(cadena):
-    "Convierte el array de bytes en string, elimina caracteres de inicio y fin, 'O' y divide los datos. "
+    """Recibe un array de bytes y lo convierte en string, elimina caracteres de inicio y fin, 'O' y divide los datos. """
     return cadena.decode("utf-8").lstrip("[O").rstrip("]\r\n").split(caracterDelimitador)
 
 def comprobarChecksum(separadas):
+    """Recibe los datos ya separados (medidas de los sensores y checksum) y comprueba si el checksum es correcto. """
     checksumObtenido = 0.0
     for valor in separadas[:-1]:
-        checksumObtenido += float(valor)
-    checksumObtenido = str(checksumObtenido).split('.')[0][-1:]
+        checksumObtenido += float(valor) # Sumatorio de los valores de los sensores
+    checksumObtenido = str(checksumObtenido).split('.')[0][-1:] # Se toma el entero a la izquierda del punto (el sumatorio es un float)
     if checksumObtenido != separadas[-1:][0]:
         return False
     return True
 
 def checkTEntreUmbrales(temperatura, umbral0, umbral1):
+    """Comprueba si una medicion de temperatura se encuentra entre dos valores. """
     if temperatura >= umbral0 and temperatura < umbral1:
         return True
     return False
 
 def fanActivadoSet(umbral):
+    """Actualiza la variable fanActivado, utilizada para conocer a que velocidad gira el ventilador. """
     global fanActivado
     fanActivado = {"umbralU0":False,
                    "umbral01":False,
@@ -48,6 +52,8 @@ def fanActivadoSet(umbral):
     fanActivado[umbral] = True
 
 def fanControl(temperatura):
+    """Recibe un valor de temperatura, comprueba en que posicion se encuentra entre los umbrales
+       y en funcion de esto activa el ventilador con mayor o menor velocidad. """
     if temperatura <= umbralesTemp[0] and fanActivado["umbralU0"] is False:
         micro.write(b"[A,1,0]")
         fanActivadoSet("umbralU0")
@@ -97,7 +103,7 @@ fanActivado = {"umbralU0":False,
 # Comunicacion por el puerto serie. El constructor Serial recibe: puerto en el que se encuentra la placa conectada y baudios
 micro = serial.Serial(puerto, 9600, timeout=1)
 
-# Bastante habitual necesitar un tiempo de setup
+# Esperar un tiempo de setup
 time.sleep(2)
 
 while(1):
@@ -131,4 +137,5 @@ while(1):
         # Se activa el motor en funcion de los umbrales definidos
         fanControl(float(separadas[2]))
 
+    # Se espera un tiempo determinado entre dos lecturas
     time.sleep(latenciaEntreLecturas)
