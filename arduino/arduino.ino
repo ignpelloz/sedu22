@@ -9,24 +9,24 @@
 #define DHTTYPE DHT11   // Tengo DHT 11 en lugar de 22
 
 // Pines
-#define ldrPin 0 // analogico (was int)
-#define servoPin 3 // digital (was int)
+#define ldrPin 0 // analogico
+#define servoPin 3 // digital
 #define dhtPin 2 // DHT en el pin 2
 #define ledRojoPin 10
 #define ledVerdePin 11
 #define ledAzulPin 12
 #define INA 5 // Fan
 #define INB 6 // Fan
+#define numeroDeActuadores 2
 
 // Maquina de estado
-int estado = 1;
+uint8_t estado = 1;
 char charRecibido;
-int posblesActuadores[] = {0,1};
-int actuadorAAccionar;
-int numeroDeActuadores = 2;
-int posiblesMovimientos[] = {0,1,2,3,4,5,6,7,8,9};
-int movimientoSolicitado;
-int numeroDeMovimientos = 10;
+uint8_t posblesActuadores[] = {0,1};
+uint8_t actuadorAAccionar;
+uint8_t posiblesMovimientos[] = {0,1,2,3,4,5,6,7,8,9};
+uint8_t movimientoSolicitado;
+uint8_t numeroDeMovimientos = 10;
 
 // Tengo DHT 11 en lugar de 22
 #define DHTTYPE DHT11
@@ -89,8 +89,8 @@ void estadoError(){
 /**
  * Dados un array y un elemento, comprueba si el array contiene al elemento.
  */
-boolean arrayContieneElemento(int array[], int arrayLen, int elemento) {
-  for (int i = 0; i < arrayLen; i++) {
+boolean arrayContieneElemento(uint8_t array[], uint8_t arrayLen, int elemento) {
+  for (uint8_t i = 0; i < arrayLen; i++) {
     if (array[i] == elemento) {
       return true;
     }
@@ -101,7 +101,7 @@ boolean arrayContieneElemento(int array[], int arrayLen, int elemento) {
 /**
  * Recibe un pin (entero) al que hay conectado un led e ilumina este durante 400 ms.
  */
-void ledBlink(int ledPin){
+void ledBlink(uint8_t ledPin){
   digitalWrite(ledPin, HIGH);
   delay(400);
   digitalWrite(ledPin, LOW);
