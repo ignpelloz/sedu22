@@ -10,11 +10,11 @@ Código del microcontrolador.
 
 Script que contiene comandos para instalar y configurar el servidor de base de datos y lanzar su servicio.
 
-Además, contiene commandos del CLI de SQL para crear la base de datos y la tabla dentro de esta.
+Además, contiene comandos del CLI de SQL para crear la base de datos y la tabla dentro de esta.
 
 ## `./mod7/mod7.py`
 
-Script en Python referente al moódulo 7.
+Script en Python referente al módulo 7.
 
 ## `./mod7/service.sh`
 
@@ -22,8 +22,8 @@ Script en Bash que contiene los comandos para definir, arrancar y mostrar logs d
 
 ## `./mod8/mod8.py`
 
-Script en Python referente al moódulo 8.
+Script en Python referente al módulo 8.
 
 ## `./mod8/service.sh`
 
-Script en Bash que contiene los comandos para definir, arrancar y mostrar logs del servicio referente al módulo 8, es decir, el que lee periódicamente registros en la base de datos local y los envia a la nube ThingSpeak (script `./mod8/mod8.py`).
+Script en Bash que contiene los comandos para definir, arrancar y mostrar logs del servicio referente al módulo 8, es decir, el que lee periódicamente registros en la base de datos local y los envía a la nube ThingSpeak (script `./mod8/mod8.py`).
